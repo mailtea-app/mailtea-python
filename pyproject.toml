@@ -20,8 +20,8 @@ dependencies = []
 
 [project.urls]
 Homepage = "https://mailtea.app"
-Documentation = "https://api.mailtea.app"
-Repository = "https://github.com/mailtea-app/mailtea"
+Documentation = "https://docs.mailtea.app"
+Repository = "https://github.com/mailtea-app/mailtea-python"
 
 [tool.hatch.build.targets.wheel]
 packages = ["mailtea"]
