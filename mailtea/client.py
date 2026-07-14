@@ -4,6 +4,7 @@ import json
 import os
 from typing import Any, Optional
 
+from ._resource import wrap as _wrap
 from ._transport import Transport, urllib_transport
 from .api_keys import ApiKeys
 from .contact_properties import ContactProperties
@@ -24,13 +25,16 @@ class Mailtea:
 
     >>> from mailtea import Mailtea
     >>> mailtea = Mailtea(os.environ["MAILTEA_API_KEY"])
-    >>> sent = mailtea.emails.send({
-    ...     "from": "you@yourdomain.com",
-    ...     "to": "recipient@example.com",
-    ...     "subject": "Hello",
-    ...     "html": "<p>Sent with Mailtea.</p>",
-    ... })
-    >>> sent["id"]
+    >>> sent = mailtea.emails.send(
+    ...     from_="you@yourdomain.com",
+    ...     to="recipient@example.com",
+    ...     subject="Hello",
+    ...     html="<p>Sent with Mailtea.</p>",
+    ... )
+    >>> sent.id  # responses allow attribute and ["..."] access alike
+
+    Payloads may equally be passed as a single wire-format dict
+    (``send({"from": ..., "to": ...})``) — both styles hit the same endpoint.
 
     The API key may be passed explicitly or read from ``MAILTEA_API_KEY``.
     Self-hosting/local dev: pass ``base_url`` or set ``MAILTEA_API_BASE_URL``.
@@ -93,4 +97,6 @@ class Mailtea:
 
         if response.status == 204 or not response.text:
             return None
-        return json.loads(response.text)
+        # Responses are dicts that also allow attribute access
+        # (email["id"] and email.id both work).
+        return _wrap(json.loads(response.text))

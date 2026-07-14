@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Union
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
+
+from ._resource import body as _body, query as _query
 
 RequestFn = Callable[..., Any]
 Recipients = Union[str, List[str]]
@@ -10,19 +12,22 @@ Recipients = Union[str, List[str]]
 class Emails:
     """The ``emails`` resource. Access via ``mailtea.emails``.
 
-    Payloads are plain dicts matching the REST wire format (snake_case keys like
-    ``reply_to`` and ``scheduled_at``).
+    Every method accepts the payload as a wire-format dict, as keyword
+    arguments, or both (snake_case keys like ``reply_to``; use ``from_=`` as
+    the keyword form of ``"from"``).
     """
 
     def __init__(self, request: RequestFn) -> None:
         self._request = request
 
-    def send(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def send(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Send a transactional email. Provide ``html``/``text`` OR a ``template``.
+
+        >>> mailtea.emails.send(from_="a@b.co", to="c@d.co", subject="Hi", html="<p>Hi</p>")
 
         Returns ``{"id": ...}``.
         """
-        return self._request("POST", "/v1/emails", params)
+        return self._request("POST", "/v1/emails", _body(params, kwargs))
 
     def batch(self, emails: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Send up to 100 emails in one request. Returns ``{"data": [{"id": ...}]}``."""
@@ -38,14 +43,16 @@ class Emails:
             email["status"] = email.get("last_event")
         return email
 
-    def list(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def list(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """List emails (most recent first). Optional filters: ``status``, ``tag_name``,
         ``tag_value``, ``from_date``, ``to_date``, ``limit``, ``offset``."""
-        return self._request("GET", "/v1/emails" + _query(params))
+        return self._request("GET", "/v1/emails" + _query(_body(params, kwargs)))
 
-    def update(self, id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def update(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Update a scheduled email (currently only ``scheduled_at``)."""
-        return self._request("PATCH", "/v1/emails/" + quote(str(id), safe=""), params)
+        return self._request(
+            "PATCH", "/v1/emails/" + quote(str(id), safe=""), _body(params, kwargs)
+        )
 
     def reschedule(self, id: str, scheduled_at: str) -> Dict[str, Any]:
         """Convenience wrapper over :meth:`update` for the reschedule case."""
@@ -54,10 +61,3 @@ class Emails:
     def cancel(self, id: str) -> Dict[str, Any]:
         """Cancel a scheduled email before it sends."""
         return self._request("POST", "/v1/emails/" + quote(str(id), safe="") + "/cancel")
-
-
-def _query(params: Optional[Dict[str, Any]]) -> str:
-    if not params:
-        return ""
-    clean = {key: value for key, value in params.items() if value is not None}
-    return ("?" + urlencode(clean)) if clean else ""
