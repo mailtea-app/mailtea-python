@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from urllib.parse import quote
 
 from ._resource import body as _body, query as _query
+from .inbound import InboundEmails
 
 RequestFn = Callable[..., Any]
 Recipients = Union[str, List[str]]
@@ -19,15 +20,35 @@ class Emails:
 
     def __init__(self, request: RequestFn) -> None:
         self._request = request
+        #: Inbound (received) emails: list, get, reply, and attachments.
+        self.inbound = InboundEmails(request)
 
     def send(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Send a transactional email. Provide ``html``/``text`` OR a ``template``.
 
         >>> mailtea.emails.send(from_="a@b.co", to="c@d.co", subject="Hi", html="<p>Hi</p>")
 
+        ``to``, ``cc``, ``bcc``, and ``reply_to`` each accept a single address or
+        a list. Additional optional fields (wire format, snake_case):
+
+        - ``tags`` — a list of ``{"name": ..., "value": ...}`` for filtering and
+          analytics.
+        - ``headers`` — a dict of extra custom email headers.
+        - ``attachments`` — a list of ``{"filename", "content", ...}`` where
+          ``content`` is base64. Set ``content_type`` and a ``content_id`` to
+          embed an inline image referenced by ``cid:`` in the HTML; omit
+          ``content_id`` for a regular file attachment.
+        - ``scheduled_at`` — an ISO 8601 datetime to schedule the send.
+
         Returns ``{"id": ...}``.
         """
         return self._request("POST", "/v1/emails", _body(params, kwargs))
+
+    def analytics(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Aggregate transactional metrics over an optional date window: totals,
+        delivered/bounced/open/click counts, per-status counts, and rates.
+        Optional filters: ``from_date``, ``to_date`` (ISO 8601)."""
+        return self._request("GET", "/v1/emails/analytics" + _query(_body(params, kwargs)))
 
     def batch(self, emails: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Send up to 100 emails in one request. Returns ``{"data": [{"id": ...}]}``."""

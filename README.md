@@ -59,6 +59,12 @@ Python reserved words (`from_=` → `"from"`).
 | `emails.update(id, params)` | Reschedule a scheduled email |
 | `emails.reschedule(id, scheduled_at)` | Convenience wrapper over `update` |
 | `emails.cancel(id)` | Cancel a scheduled email |
+| `emails.analytics(params=None)` | Aggregate transactional metrics over an optional date window |
+| `emails.inbound.list(params=None)` | List received emails in a publication (cursor-paginated) |
+| `emails.inbound.get(id)` | Retrieve a received email with body, headers, and attachments |
+| `emails.inbound.reply(id, params=None)` | Reply to a received email (threads by construction) |
+| `emails.inbound.attachments.list(id)` | List a received email's attachments (signed download URLs) |
+| `emails.inbound.attachments.get(id, attachment_id)` | Retrieve one inbound attachment |
 | `contacts.create / upsert / list / get / update / delete` | Manage audience contacts (`upsert` = `create`; the endpoint upserts) |
 | `posts.create(...)` | Create a newsletter post (draft, or `send=True`) → `{"id": ...}` |
 | `posts.send(id, scheduled_at=None)` | Send a draft post to the audience, now or scheduled |
@@ -74,6 +80,49 @@ Python reserved words (`from_=` → `"from"`).
 Payloads follow the REST wire format (`reply_to`, `scheduled_at`, …), passed as
 keyword arguments or a plain dict. Errors raise `MailteaError` with `status`,
 `details`, and `request_id`.
+
+`emails.send` also accepts `tags`, custom `headers`, `attachments`, and
+`scheduled_at`. Attachments carry base64 `content`; set a `content_id` (plus
+`content_type`) to embed an inline image referenced by `cid:` in the HTML:
+
+```python
+mailtea.emails.send(
+    from_="you@yourdomain.com",
+    to="recipient@example.com",
+    subject="Your receipt",
+    html='<p>Thanks!</p><img src="cid:logo" />',
+    tags=[{"name": "category", "value": "receipt"}],
+    attachments=[
+        {"filename": "receipt.pdf", "content": pdf_base64},
+        {"filename": "logo.png", "content": logo_base64,
+         "content_type": "image/png", "content_id": "logo"},  # inline
+    ],
+)
+```
+
+## Verifying webhooks
+
+Mailtea signs every outbound webhook with [Standard Webhooks](https://www.standardwebhooks.com/).
+`verify_webhook_signature` checks the signature and rejects replays. Pass the
+**raw** request body (not re-serialized JSON) and the endpoint's `whsec_…`
+signing secret:
+
+```python
+from mailtea import verify_webhook_signature
+
+ok = verify_webhook_signature(
+    secret=signing_secret,                       # whsec_… from webhooks.create
+    msg_id=request.headers["webhook-id"],
+    timestamp=request.headers["webhook-timestamp"],
+    payload=raw_body,                            # exact bytes/string received
+    signature_header=request.headers["webhook-signature"],
+)
+if not ok:
+    return 401
+```
+
+`sign_webhook(secret, msg_id, timestamp, payload)` produces the same header, handy
+for faking deliveries in tests. Both are stdlib-only.
 
 ## Develop
 
