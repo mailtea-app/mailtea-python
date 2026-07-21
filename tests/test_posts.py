@@ -49,6 +49,45 @@ class PostsTest(unittest.TestCase):
         client.posts.send_test("iss/1", {"recipients": ["you@x.com"], "from": "a@b.com"})
         self.assertEqual(t.calls[0]["url"], "https://api.mailtea.app/v1/posts/iss%2F1/test")
 
+    def test_list_passes_query_filters(self):
+        client, t = self._client([{"json": {"data": [], "total": 0}}])
+        client.posts.list(publication_id="pub_1", limit=10, offset=20, status="draft", kind="newsletter")
+        call = t.calls[0]
+        self.assertEqual(call["method"], "GET")
+        self.assertEqual(
+            call["url"],
+            "https://api.mailtea.app/v1/posts"
+            "?publication_id=pub_1&limit=10&offset=20&status=draft&kind=newsletter",
+        )
+
+    def test_get_retrieves_post(self):
+        client, t = self._client([{"json": {"object": "post", "id": "iss_1"}}])
+        client.posts.get("iss_1", {"publication_id": "pub_1"})
+        call = t.calls[0]
+        self.assertEqual(call["method"], "GET")
+        self.assertEqual(
+            call["url"], "https://api.mailtea.app/v1/posts/iss_1?publication_id=pub_1"
+        )
+
+    def test_update_patches_draft_body(self):
+        client, t = self._client([{"json": {"object": "post", "id": "iss_1"}}])
+        client.posts.update("iss_1", {"subject": "New subject", "html": "<p>Hi</p>"})
+        call = t.calls[0]
+        self.assertEqual(call["method"], "PATCH")
+        self.assertEqual(call["url"], "https://api.mailtea.app/v1/posts/iss_1")
+        self.assertEqual(
+            json.loads(call["body"]), {"subject": "New subject", "html": "<p>Hi</p>"}
+        )
+
+    def test_delete_removes_draft(self):
+        client, t = self._client([{"json": {"object": "post", "id": "iss_1", "deleted": True}}])
+        client.posts.delete("iss_1", {"publication_id": "pub_1"})
+        call = t.calls[0]
+        self.assertEqual(call["method"], "DELETE")
+        self.assertEqual(
+            call["url"], "https://api.mailtea.app/v1/posts/iss_1?publication_id=pub_1"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

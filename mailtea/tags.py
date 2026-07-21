@@ -22,6 +22,10 @@ class Tags:
         self._request = request
 
     def create(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Create a tag definition. Requires ``publication_id``, ``name``, and
+        ``default_subscription`` (``"opt_in"`` or ``"opt_out"``). Optional
+        ``description`` and ``visibility`` (``"private"`` by default; ``"public"``
+        makes the tag a reader-facing topic subscribers can manage)."""
         return self._request("POST", "/v1/tags", _body(params, kwargs))
 
     def list(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:

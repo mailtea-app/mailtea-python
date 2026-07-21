@@ -69,8 +69,17 @@ Python reserved words (`from_=` → `"from"`).
 | `posts.create(...)` | Create a newsletter post (draft, or `send=True`) → `{"id": ...}` |
 | `posts.send(id, scheduled_at=None)` | Send a draft post to the audience, now or scheduled |
 | `posts.send_test(id, params)` | Send a `[TEST]` copy of a post → `{"sent_to", "failed_to"}` |
+| `posts.list(params)` | List posts (offset-paginated) → `{"data", "total"}` |
+| `posts.get(id, params=None)` | Retrieve a post by id |
+| `posts.update(id, params)` | Update a draft post (`subject`, `html`, `text`, `from`, `reply_to`, `name`) |
+| `posts.delete(id, params=None)` | Delete a draft post |
 | `segments.create / list / get / update / delete` | Manage audience segments |
-| `tags.create / list / get / update / delete` | Manage tag definitions |
+| `tags.create / list / get / update / delete` | Manage tag definitions (`visibility="public"` → reader-facing topic) |
+| `senders.create / list / get / update / delete` | Manage named From identities (`email` immutable) |
+| `templates.create / list / get / update / publish / duplicate / delete` | Manage reusable email templates |
+| `templates.render(params)` | Render a spec to HTML without saving → `{"html", "text"}` |
+| `suppressions.list / add / remove` | Manage the team-wide do-not-send list |
+| `suppressions.export()` | Export the whole suppression list as CSV (raw text) |
 | `domains.create / list / get / verify / update / delete` | Manage sending domains (add, read DNS records, verify) |
 | `domains.tracking.create / list / verify / delete` | Manage CNAME tracking sub-domains under a domain |
 | `webhooks.create / list / get / update / delete` | Manage outbound event subscriptions |

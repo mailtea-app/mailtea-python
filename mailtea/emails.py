@@ -28,6 +28,10 @@ class Emails:
 
         >>> mailtea.emails.send(from_="a@b.co", to="c@d.co", subject="Hi", html="<p>Hi</p>")
 
+        Set the From with exactly one of ``from_`` (a ``Name <email>`` string) or
+        ``sender_id`` (the id of a named, verified publication sender, which also
+        supplies its default ``reply_to``).
+
         ``to``, ``cc``, ``bcc``, and ``reply_to`` each accept a single address or
         a list. Additional optional fields (wire format, snake_case):
 

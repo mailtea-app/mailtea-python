@@ -14,7 +14,10 @@ from .emails import Emails
 from .errors import MailteaError
 from .posts import Posts
 from .segments import Segments
+from .senders import Senders
+from .suppressions import Suppressions
 from .tags import Tags
+from .templates import Templates
 from .webhooks import Webhooks
 
 DEFAULT_BASE_URL = "https://api.mailtea.app"
@@ -64,13 +67,16 @@ class Mailtea:
         self.contacts = Contacts(self._request)
         self.posts = Posts(self._request)
         self.segments = Segments(self._request)
+        self.senders = Senders(self._request)
+        self.suppressions = Suppressions(self._request)
         self.tags = Tags(self._request)
+        self.templates = Templates(self._request)
         self.domains = Domains(self._request)
         self.webhooks = Webhooks(self._request)
         self.contact_properties = ContactProperties(self._request)
         self.api_keys = ApiKeys(self._request)
 
-    def _request(self, method: str, path: str, body: Any = None) -> Any:
+    def _request(self, method: str, path: str, body: Any = None, *, raw: bool = False) -> Any:
         url = self._base_url + path
         headers = {"Authorization": "Bearer " + self._api_key}
         data: Optional[bytes] = None
@@ -97,6 +103,10 @@ class Mailtea:
 
         if response.status == 204 or not response.text:
             return None
+        # A few endpoints (e.g. suppressions export) return non-JSON bodies —
+        # hand back the raw text untouched instead of parsing it.
+        if raw:
+            return response.text
         # Responses are dicts that also allow attribute access
         # (email["id"] and email.id both work).
         return _wrap(json.loads(response.text))

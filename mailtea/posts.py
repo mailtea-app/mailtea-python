@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, Optional
 from urllib.parse import quote
 
-from ._resource import body as _body
+from ._resource import body as _body, query as _query
 
 RequestFn = Callable[..., Any]
 
@@ -22,12 +22,38 @@ class Posts:
     def create(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Create a newsletter post (draft by default). Seed it from a published
         server template with ``template_id`` + ``variables``, or pass inline
-        ``html``. Set ``send=True`` to deliver right after creating (or with
-        ``scheduled_at`` to schedule) — that requires the ``issues:send`` scope.
+        ``html``. ``kind`` selects the post type (``"newsletter"`` or
+        ``"broadcast"``). Set ``send=True`` to deliver right after creating (or
+        with ``scheduled_at`` to schedule) — that requires the ``issues:send`` scope.
 
         Returns ``{"id": ...}``.
         """
         return self._request("POST", "/v1/posts", _body(params, kwargs))
+
+    def list(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """List posts (most recent first, offset-paginated). Takes ``publication_id``
+        (required) plus optional ``limit``, ``offset``, ``status``, and ``kind``
+        (``"newsletter"`` or ``"broadcast"``). Returns ``{"data", "total"}``."""
+        return self._request("GET", "/v1/posts" + _query(_body(params, kwargs)))
+
+    def get(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Retrieve a post by id."""
+        return self._request(
+            "GET", "/v1/posts/" + quote(str(id), safe="") + _query(_body(params, kwargs))
+        )
+
+    def update(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Update a draft post (sent posts are immutable). Accepts ``subject``,
+        ``html``, ``text``, ``from``, ``reply_to``, and ``name``."""
+        return self._request(
+            "PATCH", "/v1/posts/" + quote(str(id), safe=""), _body(params, kwargs)
+        )
+
+    def delete(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Delete a draft post (sent posts cannot be deleted)."""
+        return self._request(
+            "DELETE", "/v1/posts/" + quote(str(id), safe="") + _query(_body(params, kwargs))
+        )
 
     def send(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Send a draft post to the publication's audience — immediately, or at
