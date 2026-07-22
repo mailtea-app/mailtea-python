@@ -67,11 +67,12 @@ class EmailsTest(unittest.TestCase):
 
     def test_list_builds_query_and_drops_none(self):
         client, t = self._client([{"json": {"object": "list", "data": [], "total": 0}}])
-        client.emails.list({"status": "sent", "limit": 10, "offset": None})
+        client.emails.list({"status": "sent", "limit": 10, "search": "invoice", "offset": None})
         url = t.calls[0]["url"]
         self.assertIn("/v1/emails?", url)
         self.assertIn("status=sent", url)
         self.assertIn("limit=10", url)
+        self.assertIn("search=invoice", url)
         self.assertNotIn("offset", url)
 
     def test_reschedule_patches_scheduled_at(self):

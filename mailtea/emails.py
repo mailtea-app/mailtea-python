@@ -70,7 +70,8 @@ class Emails:
 
     def list(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """List emails (most recent first). Optional filters: ``status``, ``tag_name``,
-        ``tag_value``, ``from_date``, ``to_date``, ``limit``, ``offset``."""
+        ``tag_value``, ``search`` (substring match on recipient/sender/subject),
+        ``from_date``, ``to_date``, ``limit``, ``offset``."""
         return self._request("GET", "/v1/emails" + _query(_body(params, kwargs)))
 
     def update(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
