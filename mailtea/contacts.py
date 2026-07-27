@@ -30,6 +30,10 @@ class Contacts:
         return self.create(params, **kwargs)
 
     def list(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """List contacts (cursor-paginated). Filters: ``publication_id``
+        (required), ``status`` (``active``/``unsubscribed``/``suppressed``),
+        ``search`` (matches the email address), ``limit``, ``after`` (cursor
+        from a previous ``next_cursor``)."""
         return self._request("GET", "/v1/contacts" + _query(_body(params, kwargs)))
 
     def get(self, id_or_email: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:

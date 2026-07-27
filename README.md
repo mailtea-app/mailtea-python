@@ -85,6 +85,16 @@ Python reserved words (`from_=` → `"from"`).
 | `webhooks.create / list / get / update / delete` | Manage outbound event subscriptions |
 | `contact_properties.create / list / update / delete` | Manage custom contact fields (team-scoped) |
 | `api_keys.create / list / revoke` | Manage API keys (`settings:write`) |
+| `automations.create / list / get / update / delete` | Manage automation graphs (`steps` + optional `connections`) |
+| `automations.validate(params)` | Dry-run a graph → `{"valid", "issues"}` (no automation needed) |
+| `automations.activate / pause / archive` | Lifecycle (`cancel_runs` defaults **false** on pause, **true** on archive) |
+| `automations.versions(id, ...)` / `automations.version(id, version, ...)` | List stored versions; retrieve one with its graph |
+| `automations.metrics(id, params=None)` | Per-step funnel counts and branch splits (test runs excluded) |
+| `automations.test(id, params)` | One test run against a real contact — **sends real, billed email** |
+| `automation_runs.list / get / cancel` | Inspect and cancel runs (a run pins the version it started on) |
+| `events.send(params)` | Record a custom event → `{"enrolled_automations", "resumed_runs"}` |
+| `events.list(params)` | List recorded events (cursor-paginated) |
+| `event_definitions.create / list / get / update / delete` | Manage the event catalog (`name` immutable) |
 
 Payloads follow the REST wire format (`reply_to`, `scheduled_at`, …), passed as
 keyword arguments or a plain dict. Errors raise `MailteaError` with `status`,

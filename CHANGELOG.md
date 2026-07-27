@@ -2,6 +2,21 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## 0.4.0 (2026-07-27)
+
+### Added
+
+- **Automations resource** — `client.automations.create / list / get / update / delete`, the lifecycle verbs `activate / pause / archive`, version history via `versions / version`, plus `metrics` and `test`. An automation is a versioned graph of `steps` + `connections` with no stored coordinates, so it is fully authorable from Python. `connections` is **optional**: omit it and the steps link in array order; it becomes required as soon as the graph contains a `condition` or `wait_for_event` step, which otherwise fails with `connections_required_for_branching`.
+- **Graph validation without saving** — `automations.validate(...)` dry-runs a graph that does not exist yet, and `validate_only=True` on `create` / `update` returns the same coded `issues` list a real failure would, writing nothing. Each issue carries a stable `code`, a `severity`, and the offending `step_key` / `path`: warnings never block saving, errors block activation.
+- **Automation runs resource** — `client.automation_runs.list / get / cancel`. Run detail is self-contained: it returns the graph the run is pinned to (which may not be the live one), the ordered step timeline and the waiting state.
+- **Events resources** — `client.events.send / list` for custom event ingest (opt-in `create_contact`, `idempotency_key`, and the `enrolled_automations` / `resumed_runs` fan-out counts in the reply), and `client.event_definitions.create / list / get / update / delete`. The definition detail returns `inferred_properties` with per-key type, sample count and **coverage**, computed on read over the last 500 events.
+
+- **`search` on `emails.list`** — a case-insensitive substring match over recipient, sender and subject, applied server-side before pagination rather than to the current page. Shipped server-side on 2026-07-22, one day after 0.3.0 went out, so this is the first published release that carries it.
+
+### Documentation
+
+- `contacts.list` now documents its `search` filter. The filter itself is not new — it has worked through the keyword passthrough since the resource shipped — it was simply never written down.
+
 ## 0.3.0 (2026-07-21)
 
 ### Added

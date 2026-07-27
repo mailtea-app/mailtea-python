@@ -7,11 +7,14 @@ from typing import Any, Optional
 from ._resource import wrap as _wrap
 from ._transport import Transport, urllib_transport
 from .api_keys import ApiKeys
+from .automation_runs import AutomationRuns
+from .automations import Automations
 from .contact_properties import ContactProperties
 from .contacts import Contacts
 from .domains import Domains
 from .emails import Emails
 from .errors import MailteaError
+from .events import EventDefinitions, Events
 from .posts import Posts
 from .segments import Segments
 from .senders import Senders
@@ -75,6 +78,10 @@ class Mailtea:
         self.webhooks = Webhooks(self._request)
         self.contact_properties = ContactProperties(self._request)
         self.api_keys = ApiKeys(self._request)
+        self.automations = Automations(self._request)
+        self.automation_runs = AutomationRuns(self._request)
+        self.events = Events(self._request)
+        self.event_definitions = EventDefinitions(self._request)
 
     def _request(self, method: str, path: str, body: Any = None, *, raw: bool = False) -> Any:
         url = self._base_url + path
