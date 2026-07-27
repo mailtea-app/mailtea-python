@@ -13,10 +13,11 @@ class Templates:
     via ``mailtea.templates``.
 
     Templates are scoped to a publication — pass ``publication_id`` (except
-    :meth:`render`, which just renders a spec). Create one from raw ``html`` or a
-    json-render ``spec``, then :meth:`publish` it before seeding posts/emails
-    from it. Every method accepts the payload as a wire-format dict, as keyword
-    arguments, or both (use ``from_=`` as the keyword form of ``"from"``).
+    :meth:`render`, which just renders a spec). Create one from raw ``html``, a
+    json-render ``spec``, or an ``editor_doc`` (a Studio editor design), then
+    :meth:`publish` it before seeding posts/emails from it. Every method accepts
+    the payload as a wire-format dict, as keyword arguments, or both (use
+    ``from_=`` as the keyword form of ``"from"``).
     """
 
     def __init__(self, request: RequestFn) -> None:
@@ -28,9 +29,13 @@ class Templates:
         return self._request("POST", "/v1/templates/render", _body(params, kwargs))
 
     def create(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
-        """Create a template from ``html`` OR a ``spec`` (one is required). Takes
-        ``publication_id`` and ``name``, plus optional ``description``, ``text``,
-        ``subject``, ``from``, ``reply_to``, and ``variables``."""
+        """Create a template from ``html``, a ``spec``, OR an ``editor_doc``
+        (exactly one is required — the server renders ``html`` from an
+        ``editor_doc``, so do not send both). Takes ``publication_id`` and
+        ``name``, plus optional ``style_profile``, ``mailtea_theme``,
+        ``global_css``, ``category``, ``preview_image_url``, ``tags``,
+        ``description``, ``text``, ``subject``, ``from``, ``reply_to``, and
+        ``variables``."""
         return self._request("POST", "/v1/templates", _body(params, kwargs))
 
     def list(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
@@ -44,9 +49,14 @@ class Templates:
         )
 
     def update(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
-        """Update a template's ``name``, ``html``/``spec``, ``description``,
-        ``text``, ``subject``, ``from``, ``reply_to``, or ``variables``.
-        ``publication_id`` is required (sent as a query parameter)."""
+        """Update a template's ``name``, ``html``/``spec``/``editor_doc``,
+        ``style_profile``, ``mailtea_theme``, ``global_css``, ``category``,
+        ``preview_image_url``, ``tags``, ``description``, ``text``, ``subject``,
+        ``from``, ``reply_to``, or ``variables``. An ``editor_doc`` re-renders
+        ``html`` server-side, so do not send both. ``global_css``, ``category``,
+        ``preview_image_url``, ``tags``, ``text``, ``subject``, ``from`` and
+        ``reply_to`` accept ``None`` to clear them. ``publication_id`` is
+        required (sent as a query parameter)."""
         merged = _body(params, kwargs)
         return self._request(
             "PATCH",
@@ -61,6 +71,15 @@ class Templates:
         return self._request(
             "POST",
             "/v1/templates/" + quote(str(id), safe="") + "/publish" + _query(_body(params, kwargs)),
+        )
+
+    def unpublish(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Return a published template to draft. ``published_at`` is kept — it
+        records that the template was published once, not that it still is.
+        Requires ``publication_id``."""
+        return self._request(
+            "POST",
+            "/v1/templates/" + quote(str(id), safe="") + "/unpublish" + _query(_body(params, kwargs)),
         )
 
     def duplicate(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:

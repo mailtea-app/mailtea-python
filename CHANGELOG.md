@@ -2,6 +2,19 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## 0.5.0 (2026-07-27)
+
+### Added
+
+- **Designed templates — `format: "editor"`.** `templates.create` and `templates.update` accept `editor_doc`, the TipTap document the Visual Email Designer writes, and the server renders and stores the email HTML from it. This is what makes a template designed in Mailtea Studio and one authored from code the same record: previously the design source lived only in the operator's browser and the API could only take raw `html` or a json-render `spec`. Do **not** pass `html` alongside `editor_doc` — the HTML is derived, and an update that tries it is refused with `editor_template_html_not_accepted`.
+- **The fidelity sidecars `html` cannot carry** — `style_profile`, `mailtea_theme` and `global_css`, plus the library metadata `category`, `preview_image_url` and `tags`. On update the four clearable fields take `None` to clear, the same way `subject` and `reply_to` already do.
+- **`templates.unpublish(id, publication_id=...)`** — the retraction half of `publish`. Publishing was one-way: the only way to take a template out of circulation was to delete it or edit its body. `status` returns to `draft` and the body is untouched; `published_at` is kept, because it records that the template *was* published, which is history rather than current state.
+
+### Changed
+
+- `templates.render` now actually substitutes the `variables` map it has always accepted. The server parsed the map and discarded it, so a preview came back full of raw `{{placeholders}}` while every other render path substituted. No signature change — the same call now returns the rendered result it documented.
+- `templates.render` now requires the `templates:read` scope. It was the only template route with no scope check at all. Keys minted from the `read_only` or `sending_access` presets hold no `templates:*` scope and will now receive a `403`; they could not list, read or create templates before either.
+
 ## 0.4.0 (2026-07-27)
 
 ### Added
