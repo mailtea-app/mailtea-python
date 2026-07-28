@@ -167,6 +167,52 @@ class TemplatesTest(unittest.TestCase):
             "https://api.mailtea.app/v1/templates/tpl_1/duplicate?publication_id=pub_1",
         )
 
+    def test_versions_gets_history_with_publication_id_and_limit(self):
+        client, t = self._client(
+            [
+                {
+                    "json": {
+                        "object": "list",
+                        "data": [{"id": "etv_2", "version": 2, "is_current": True}],
+                        "retention": {"max_versions": 50, "coalesce_window_seconds": 600},
+                    }
+                }
+            ]
+        )
+        history = client.templates.versions("tpl_1", publication_id="pub_1", limit=10)
+        self.assertEqual(t.calls[0]["method"], "GET")
+        self.assertEqual(
+            t.calls[0]["url"],
+            "https://api.mailtea.app/v1/templates/tpl_1/versions?publication_id=pub_1&limit=10",
+        )
+        self.assertEqual(history.retention.max_versions, 50)
+
+    def test_restore_version_posts_the_restore_route(self):
+        client, t = self._client(
+            [
+                {
+                    "json": {
+                        "restored": True,
+                        "restored_from_version": 3,
+                        "unpublished": True,
+                        "message": "Restored version 3.",
+                        "template": {"id": "tpl_1", "status": "draft"},
+                    }
+                }
+            ]
+        )
+        result = client.templates.restore_version("tpl_1", 3, {"publication_id": "pub_1"})
+        call = t.calls[0]
+        self.assertEqual(call["method"], "POST")
+        self.assertEqual(
+            call["url"],
+            "https://api.mailtea.app/v1/templates/tpl_1/versions/3/restore?publication_id=pub_1",
+        )
+        self.assertIsNone(call["body"])
+        # A restore is a content write, so the template comes back as a draft.
+        self.assertTrue(result.unpublished)
+        self.assertEqual(result.template.status, "draft")
+
     def test_delete_passes_publication_id_in_query(self):
         client, t = self._client([{"json": {"object": "template", "id": "tpl_1", "deleted": True}}])
         client.templates.delete("tpl_1", {"publication_id": "pub_1"})

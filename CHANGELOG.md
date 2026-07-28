@@ -2,6 +2,13 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## Unreleased
+
+### Added
+
+- **`templates.versions(id, publication_id=..., limit=...)`** — a template's design history, newest first. Entries are metadata only (`version`, `origin` — `"edit"` / `"publish"` / `"restore"` —, `restored_from_version`, `format`, `name`, `sealed`, `is_current`, timestamps, `author`), never the design document itself, which one entry alone can carry half a megabyte of. `is_current` marks the design the template is serving right now, which is not always the newest entry: a metadata-only update touches the template without recording a version. The reply also carries `retention` — only the newest `max_versions` are kept, and consecutive edits by the same author within `coalesce_window_seconds` collapse into one entry.
+- **`templates.restore_version(id, version, publication_id=...)`** — put an older design back. It is a content write, so the template **returns to draft**: automations and the API stop sending it until `templates.publish` is called again, and the reply's `unpublished` says whether that just happened. History is forward-only — the design being replaced is recorded as its own version first and the restored design is appended as the new newest one, so a restore is undone by restoring the entry directly above it. Restoring the design that is already current writes nothing and returns `restored: False` with `reason: "identical"`, so a no-op restore cannot unpublish a live template; a version that has aged out of retention raises with `code` `template_version_not_found`.
+
 ## 0.5.0 (2026-07-27)
 
 ### Added

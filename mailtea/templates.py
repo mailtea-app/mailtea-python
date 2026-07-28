@@ -82,6 +82,61 @@ class Templates:
             "/v1/templates/" + quote(str(id), safe="") + "/unpublish" + _query(_body(params, kwargs)),
         )
 
+    def versions(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """List a template's design history, newest first. Requires
+        ``publication_id``; optional ``limit`` (the server caps it at the
+        retained maximum).
+
+        Entries are metadata only — ``version``, ``origin`` (``"edit"``,
+        ``"publish"`` or ``"restore"``), ``restored_from_version``, ``format``,
+        ``name``, ``sealed``, ``is_current``, ``created_at``, ``updated_at`` and
+        ``author`` (or ``None``) — never the design document, which one entry
+        alone can carry half a megabyte of. ``is_current`` marks the design the
+        template is serving right now, which is not always the newest entry: a
+        metadata-only update touches the template without recording a version.
+
+        The reply also carries ``retention``: only the newest ``max_versions``
+        are kept, and consecutive edits by the same author within
+        ``coalesce_window_seconds`` collapse into one entry."""
+        return self._request(
+            "GET",
+            "/v1/templates/" + quote(str(id), safe="") + "/versions" + _query(_body(params, kwargs)),
+        )
+
+    def restore_version(
+        self, id: str, version: Any, params: Optional[Dict[str, Any]] = None, **kwargs: Any
+    ) -> Dict[str, Any]:
+        """Put an older design from :meth:`versions` back onto the template.
+        Requires ``publication_id``.
+
+        **Restoring is a content write, so the template returns to draft** —
+        automations and the API stop sending it until :meth:`publish` is called
+        again. The reply's ``unpublished`` reports whether that just happened;
+        re-publishing is the caller's job.
+
+        History is forward-only: the design being replaced is recorded as its own
+        version first, then the restored design is appended as the new newest
+        one. Nothing is rewound or deleted, so a restore is itself undone by
+        restoring the entry directly above it.
+
+        Restoring the design that is already current writes nothing and returns
+        ``restored: False`` with ``reason: "identical"`` and
+        ``unpublished: False``, so a no-op restore cannot unpublish a live
+        template. A version that has aged out of retention raises
+        :class:`~mailtea.errors.MailteaError` with ``code``
+        ``template_version_not_found``. Returns ``restored``,
+        ``restored_from_version``, ``unpublished``, ``message`` and the updated
+        ``template``."""
+        return self._request(
+            "POST",
+            "/v1/templates/"
+            + quote(str(id), safe="")
+            + "/versions/"
+            + quote(str(version), safe="")
+            + "/restore"
+            + _query(_body(params, kwargs)),
+        )
+
     def duplicate(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Duplicate a template into a new draft. Requires ``publication_id``."""
         return self._request(
