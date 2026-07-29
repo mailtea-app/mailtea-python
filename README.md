@@ -74,7 +74,7 @@ Python reserved words (`from_=` → `"from"`).
 | `posts.update(id, params)` | Update a draft post (`subject`, `html`, `text`, `from`, `reply_to`, `name`) |
 | `posts.delete(id, params=None)` | Delete a draft post |
 | `segments.create / list / get / update / delete` | Manage audience segments |
-| `tags.create / list / get / update / delete` | Manage tag definitions (`visibility="public"` → reader-facing topic) |
+| `topics.create / list / get / update / delete` | Manage topic definitions (`visibility="public"` → shown on the reader preference page) |
 | `senders.create / list / get / update / delete` | Manage named From identities (`email` immutable) |
 | `templates.create / list / get / update / publish / duplicate / delete` | Manage reusable email templates |
 | `templates.render(params)` | Render a spec to HTML without saving → `{"html", "text"}` |

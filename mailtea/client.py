@@ -19,7 +19,7 @@ from .posts import Posts
 from .segments import Segments
 from .senders import Senders
 from .suppressions import Suppressions
-from .tags import Tags
+from .topics import Topics
 from .templates import Templates
 from .webhooks import Webhooks
 
@@ -72,7 +72,7 @@ class Mailtea:
         self.segments = Segments(self._request)
         self.senders = Senders(self._request)
         self.suppressions = Suppressions(self._request)
-        self.tags = Tags(self._request)
+        self.topics = Topics(self._request)
         self.templates = Templates(self._request)
         self.domains = Domains(self._request)
         self.webhooks = Webhooks(self._request)
