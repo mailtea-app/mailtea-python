@@ -2,16 +2,12 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
-## Unreleased
-
+## 0.6.0 (2026-07-29)
 ### Changed
 
 - **BREAKING — `client.tags` is now `client.topics`** and targets `/v1/topics`; the module moved from `mailtea/tags.py` to `mailtea/topics.py` and the class from `Tags` to `Topics`. Method signatures are unchanged. `object` on the returned resource is `"topic"`. Topic ids keep their `tag_` prefix — opaque and permanent.
   The `tags` argument on `emails.send` and the `tag_name` / `tag_value` filters on `emails.list` are the Resend-compatible transactional metadata field, a different concept, and are **unchanged**.
 - **Webhook events** `contact.tag_subscribed` / `contact.tag_unsubscribed` are now `contact.topic_subscribed` / `contact.topic_unsubscribed`, with `topic_id` in place of `tag_id`.
-
-### Changed
-
 - **Template variable names are validated server-side.** `templates.create()` and `templates.update()` forward `variables` verbatim, and the API now refuses a key outside `^[A-Za-z_$@][A-Za-z0-9_$@.-]*$` (1–50 chars) with a `400`; one invalid key fails the whole write. No Python change — the payload is a wire-format dict and the refusal arrives as an ordinary API error. Recorded here because a name outside the rule used to be accepted, stored, and returned by `templates.get()` looking declared, and then substituted nowhere at send time: `Hi {2nd name},` reached the inbox with its braces. Dots address into send context (`contact.first_name`) and dashes are legal (`plan-tier`); pipes, spaces, braces and a leading digit are not.
 
 ### Added
