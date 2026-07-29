@@ -4,6 +4,10 @@ All notable changes to the `mailtea` Python package are documented here.
 
 ## Unreleased
 
+### Changed
+
+- **Template variable names are validated server-side.** `templates.create()` and `templates.update()` forward `variables` verbatim, and the API now refuses a key outside `^[A-Za-z_$@][A-Za-z0-9_$@.-]*$` (1–50 chars) with a `400`; one invalid key fails the whole write. No Python change — the payload is a wire-format dict and the refusal arrives as an ordinary API error. Recorded here because a name outside the rule used to be accepted, stored, and returned by `templates.get()` looking declared, and then substituted nowhere at send time: `Hi {2nd name},` reached the inbox with its braces. Dots address into send context (`contact.first_name`) and dashes are legal (`plan-tier`); pipes, spaces, braces and a leading digit are not.
+
 ### Added
 
 - **`templates.versions(id, publication_id=..., limit=...)`** — a template's design history, newest first. Entries are metadata only (`version`, `origin` — `"edit"` / `"publish"` / `"restore"` —, `restored_from_version`, `format`, `name`, `sealed`, `is_current`, timestamps, `author`), never the design document itself, which one entry alone can carry half a megabyte of. `is_current` marks the design the template is serving right now, which is not always the newest entry: a metadata-only update touches the template without recording a version. The reply also carries `retention` — only the newest `max_versions` are kept, and consecutive edits by the same author within `coalesce_window_seconds` collapse into one entry.
