@@ -2,6 +2,26 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## Unreleased
+
+### Added
+
+- **`MailteaError.code` is now populated from the API's error body.** It has always existed for client-side failures (`missing_api_key`); it was never filled in for HTTP errors, so branching on a specific API error meant matching on `err.message` — which breaks the day the copy changes. Now, when the API sends a `code` alongside `error`, the client carries it through:
+
+  ```python
+  try:
+      client.contacts.list(publication_id="pub_123")
+  except MailteaError as err:
+      if err.code == "marketing_plan_required":
+          ...  # the team is on a transactional-only plan
+  ```
+
+  Purely additive: `code` stays `None` for errors that carry no code, and `message`, `status`, `details` and `request_id` are unchanged.
+
+### Changed
+
+- **Marketing endpoints answer `402` on a transactional-only plan.** Server-side change, no Python change — recorded because it is a new failure mode for existing calls. `client.contacts`, `contact_properties`, `segments`, `topics`, `posts` and `automations` raise `MailteaError` with `status=402` and `code="marketing_plan_required"` when the API key belongs to a team on a transactional-column SKU (`hobby`, `pro_25k`, `pro_50k`, `pro_100k`, `scale_250k`, `scale_500k`, `scale_1m`). `emails`, `domains`, `senders`, `suppressions`, `templates`, `events`, `webhooks` and `api_keys` are unaffected on every plan. Nothing is deleted while a plan is transactional-only — upgrading to the matching `_full` SKU restores access.
+
 ## 0.6.0 (2026-07-29)
 ### Changed
 

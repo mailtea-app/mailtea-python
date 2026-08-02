@@ -97,15 +97,25 @@ class Mailtea:
         if response.status >= 400:
             message = "HTTP {0}".format(response.status)
             details = None
+            # Machine-readable code from the API, when it sends one (e.g.
+            # ``marketing_plan_required`` on 402). Branching on ``code`` survives
+            # a copy change to the message.
+            code = None
             try:
                 parsed = json.loads(response.text)
                 if isinstance(parsed, dict):
                     message = parsed.get("error") or message
                     details = parsed.get("details")
+                    raw_code = parsed.get("code")
+                    code = raw_code if isinstance(raw_code, str) else None
             except ValueError:
                 pass  # non-JSON body — keep the status-line message
             raise MailteaError(
-                message, status=response.status, details=details, request_id=request_id
+                message,
+                status=response.status,
+                code=code,
+                details=details,
+                request_id=request_id,
             )
 
         if response.status == 204 or not response.text:

@@ -94,6 +94,25 @@ class EmailsTest(unittest.TestCase):
         self.assertEqual(ctx.exception.status, 401)
         self.assertEqual(ctx.exception.message, "Unauthorized")
         self.assertEqual(ctx.exception.request_id, "req_1")
+        self.assertIsNone(ctx.exception.code)
+
+    def test_api_error_code_is_surfaced(self):
+        client, _ = self._client(
+            [
+                {
+                    "status": 402,
+                    "json": {
+                        "error": "Your plan covers transactional email only.",
+                        "code": "marketing_plan_required",
+                    },
+                }
+            ]
+        )
+        with self.assertRaises(MailteaError) as ctx:
+            client.emails.get("e1")
+        self.assertEqual(ctx.exception.status, 402)
+        # Branching on the code has to survive a copy change to the message.
+        self.assertEqual(ctx.exception.code, "marketing_plan_required")
 
     def test_missing_api_key_raises(self):
         saved = os.environ.pop("MAILTEA_API_KEY", None)
