@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mailtea"
-version = "0.6.0"
+version = "0.7.0"
 description = "Mailtea Python SDK — send, schedule, and manage email from your app or AI agent."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -2,9 +2,30 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
-## Unreleased
+## 0.7.0 (2026-08-06)
 
 ### Added
+
+- **`client.assets` — the publication's image library.** `upload`, `list` and
+  `delete`. An email or site image block takes an absolute URL, so until now a
+  Python caller could compose a whole newsletter and had no way to put a picture
+  in it.
+
+  ```python
+  asset = client.assets.upload(
+      publication_id="pub_123",
+      content=open("hero.png", "rb").read(),   # bytes, base64-encoded for you
+      content_type="image/png",
+      filename="hero.png",
+  )
+  asset["url"]  # -> use as an image block's src
+  ```
+
+  `content` also accepts an already-base64 `str`. PNG, JPEG, GIF or WebP, 5 MB
+  per image, 500 MB per publication. **SVG is refused** — it can carry script and
+  the file is served from a Mailtea domain — and the bytes are checked against
+  the declared `content_type`. `delete` hides an asset from the library but KEEPS
+  the file resolving, so images in already-sent emails do not break.
 
 - **`MailteaError.code` is now populated from the API's error body.** It has always existed for client-side failures (`missing_api_key`); it was never filled in for HTTP errors, so branching on a specific API error meant matching on `err.message` — which breaks the day the copy changes. Now, when the API sends a `code` alongside `error`, the client carries it through:
 

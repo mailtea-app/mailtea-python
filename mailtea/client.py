@@ -17,6 +17,7 @@ from .errors import MailteaError
 from .events import EventDefinitions, Events
 from .posts import Posts
 from .segments import Segments
+from .assets import Assets
 from .senders import Senders
 from .suppressions import Suppressions
 from .topics import Topics
@@ -71,6 +72,7 @@ class Mailtea:
         self.posts = Posts(self._request)
         self.segments = Segments(self._request)
         self.senders = Senders(self._request)
+        self.assets = Assets(self._request)
         self.suppressions = Suppressions(self._request)
         self.topics = Topics(self._request)
         self.templates = Templates(self._request)
