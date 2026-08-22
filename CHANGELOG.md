@@ -1,6 +1,10 @@
 # Changelog
 
+All notable changes to the `mailtea` Python package are documented here.
+
 ## Unreleased
+
+## 0.8.0 (2026-08-22)
 
 - Added: `image/svg+xml` is an accepted asset type for `assets.upload` — SVG
   logos and marks upload like any raster. The public asset route serves every
@@ -8,8 +12,6 @@
   SVGs safe: scripts inside one never execute, in an `<img>` or navigated to
   directly.
 
-
-All notable changes to the `mailtea` Python package are documented here.
 
 ## 0.7.0 (2026-08-06)
 
