@@ -4,6 +4,11 @@ All notable changes to the `mailtea` Python package are documented here.
 
 ## Unreleased
 
+- Added: `tracking_open` and `tracking_click` on `emails.send` and
+  `emails.batch` — send a message without an open pixel or without rewritten
+  links. A sending domain with tracking switched off cannot be overridden from
+  a send.
+
 ## 0.8.0 (2026-08-22)
 
 - Added: `image/svg+xml` is an accepted asset type for `assets.upload` — SVG
