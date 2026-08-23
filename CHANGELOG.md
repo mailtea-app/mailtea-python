@@ -4,6 +4,15 @@ All notable changes to the `mailtea` Python package are documented here.
 
 ## Unreleased
 
+- Added: `domains.update(..., custom_return_path=...)` delegates a subdomain as
+  the envelope sender so SPF aligns with your own domain, and every domain shape
+  carries `custom_return_path` / `custom_return_path_status`. Mail keeps sending
+  on the default return-path until the delegated DNS resolves.
+
+- Changed: `to`, `cc` and `bcc` are validated as email addresses. A malformed
+  recipient returns `400` rather than being accepted and failing at the
+  provider. The `"Name" <address>` form keeps working.
+
 - Added: `tracking_open` and `tracking_click` on `emails.send` and
   `emails.batch` — send a message without an open pixel or without rewritten
   links. A sending domain with tracking switched off cannot be overridden from
