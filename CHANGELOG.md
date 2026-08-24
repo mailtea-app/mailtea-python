@@ -2,7 +2,12 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
-## Unreleased
+
+## 0.9.0 (2026-08-24)
+
+- Changed: every transactional webhook's `to` is the delivered envelope, and
+  `dropped_recipients` names anyone filtered out. Also on the email record from
+  `emails.get`.
 
 - Added: `domains.update(..., custom_return_path=...)` delegates a subdomain as
   the envelope sender so SPF aligns with your own domain, and every domain shape
