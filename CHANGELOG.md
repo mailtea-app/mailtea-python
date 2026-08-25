@@ -3,6 +3,18 @@
 All notable changes to the `mailtea` Python package are documented here.
 
 
+## 0.9.1 (2026-08-25)
+
+- Documented: the API now enforces your plan's analytics retention window on
+  `from_date`. It is clamped to 30 days on most plans and 90 on Scale and
+  Enterprise; a value reaching further back returns data from the start of that
+  window rather than an error, and omitting it returns the window rather than
+  all time. No code change is required — this release only makes the behaviour
+  visible where you read it.
+- Changed: the list and analytics responses now report the window actually used
+  in `from_date`, so a clamped request is visible rather than silently short.
+- Changed: `emails.list()` and `emails.analytics()` docstrings carry it.
+
 ## 0.9.0 (2026-08-24)
 
 - Changed: every transactional webhook's `to` is the delivered envelope, and

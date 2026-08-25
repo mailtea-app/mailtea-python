@@ -5,4 +5,4 @@ from .errors import MailteaError
 from .webhook_signing import sign_webhook, verify_webhook_signature
 
 __all__ = ["Mailtea", "MailteaError", "verify_webhook_signature", "sign_webhook"]
-__version__ = "0.9.0"
+__version__ = "0.9.1"

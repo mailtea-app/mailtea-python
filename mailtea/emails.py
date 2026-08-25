@@ -51,7 +51,13 @@ class Emails:
     def analytics(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Aggregate transactional metrics over an optional date window: totals,
         delivered/bounced/open/click counts, per-status counts, and rates.
-        Optional filters: ``from_date``, ``to_date`` (ISO 8601)."""
+        Optional filters: ``from_date``, ``to_date`` (ISO 8601).
+
+        ``from_date`` is clamped to the plan's analytics retention window --
+        30 days on most plans, 90 on Scale and Enterprise. A value reaching
+        further back returns data from the start of that window rather than an
+        error, and omitting it returns the window rather than all time. The
+        ``from_date`` in the response reports the window actually used."""
         return self._request("GET", "/v1/emails/analytics" + _query(_body(params, kwargs)))
 
     def batch(self, emails: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -71,7 +77,12 @@ class Emails:
     def list(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """List emails (most recent first). Optional filters: ``status``, ``tag_name``,
         ``tag_value``, ``search`` (substring match on recipient/sender/subject),
-        ``from_date``, ``to_date``, ``limit``, ``offset``."""
+        ``from_date``, ``to_date``, ``limit``, ``offset``.
+
+        ``from_date`` is clamped to the plan's analytics retention window --
+        30 days on most plans, 90 on Scale and Enterprise. A value reaching
+        further back returns data from the start of that window rather than an
+        error, and omitting it returns the window rather than all time."""
         return self._request("GET", "/v1/emails" + _query(_body(params, kwargs)))
 
     def update(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
