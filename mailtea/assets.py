@@ -16,8 +16,9 @@ class Assets:
     is not already in the library gets into one. Pointing an image at a host you
     do not control breaks the day that host moves the file.
 
-    PNG, JPEG, GIF or WebP, 5 MB per image. SVG is refused: it can carry script
-    and the file is served from the publication's own domain. The bytes are
+    PNG, JPEG, GIF, WebP or SVG, 5 MB per image. SVG is accepted; the public
+    asset route serves it under a sandboxing Content-Security-Policy so it
+    cannot run script on the publication's domain. The bytes are
     checked against the declared ``content_type``, so a mislabelled file is
     rejected rather than stored.
 

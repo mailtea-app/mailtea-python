@@ -3,6 +3,12 @@
 All notable changes to the `mailtea` Python package are documented here.
 
 
+## Unreleased
+
+- Documented: `assets.upload` accepts SVG (`image/svg+xml`); the docstring said it
+  was refused. The API has accepted it, served under a sandboxing CSP, since the
+  asset library shipped. Docs-only, no behaviour change.
+
 ## 0.9.1 (2026-08-25)
 
 - Documented: the API now enforces your plan's analytics retention window on
