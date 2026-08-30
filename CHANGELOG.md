@@ -5,6 +5,13 @@ All notable changes to the `mailtea` Python package are documented here.
 
 ## Unreleased
 
+- Added: `contacts.set_property_values()` and `contacts.list_property_values()`.
+  These write and read the per-contact values behind `{{contact.<key>}}` merge
+  tags — previously only possible from the dashboard, so a script could define a
+  property and never fill it in. Identify each value by `key` (the name in your
+  template) or `property_id`, not both; an empty `value` clears it and restores
+  the property's `fallback_value`.
+
 - Documented: `assets.upload` accepts SVG (`image/svg+xml`); the docstring said it
   was refused. The API has accepted it, served under a sandboxing CSP, since the
   asset library shipped. Docs-only, no behaviour change.

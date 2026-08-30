@@ -57,3 +57,43 @@ class Contacts:
             "DELETE",
             "/v1/contacts/" + quote(str(id_or_email), safe="") + _query(_body(params, kwargs)),
         )
+
+    def set_property_values(
+        self, id_or_email: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any
+    ) -> Dict[str, Any]:
+        """Set this contact's property values — the data behind
+        ``{{contact.<key>}}`` merge tags.
+
+        Creating a property with ``mailtea.contact_properties.create`` only
+        defines the field; this is what puts a value on a contact.
+
+        Each entry in ``values`` identifies one property by ``key`` OR
+        ``property_id`` — exactly one, never both. ``key`` is usually what you
+        have, since it is the name written in the template. An empty ``value``
+        CLEARS the property, which makes its ``fallback_value`` apply again on
+        the next send.
+
+        >>> mailtea.contacts.set_property_values(
+        ...     "con_abc123",
+        ...     publication_id="pub_abc123",
+        ...     values=[{"key": "first_name", "value": "Ada"}],
+        ... )
+        """
+        merged = _body(params, kwargs)
+        return self._request(
+            "PUT",
+            "/v1/contacts/" + quote(str(id_or_email), safe="") + "/properties",
+            merged,
+        )
+
+    def list_property_values(
+        self, id_or_email: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any
+    ) -> Dict[str, Any]:
+        """Read this contact's property values. Requires ``publication_id``."""
+        return self._request(
+            "GET",
+            "/v1/contacts/"
+            + quote(str(id_or_email), safe="")
+            + "/properties"
+            + _query(_body(params, kwargs)),
+        )
