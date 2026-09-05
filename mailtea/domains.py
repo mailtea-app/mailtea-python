@@ -15,13 +15,17 @@ class Domains:
     Scoped to a publication — pass ``publication_id``. Register a domain, add the
     returned DNS ``records``, then :meth:`verify` it before sending from it.
     Every method accepts the payload as a wire-format dict, as keyword
-    arguments, or both.
+    arguments, or both. Pass ``region`` (fixed at creation), ``tls`` and
+    ``tracking_subdomain`` to :meth:`create`; :meth:`list` filters on ``region``
+    and ``status``.
     """
 
     def __init__(self, request: RequestFn) -> None:
         self._request = request
         #: Tracking sub-domains (CNAME) under a domain.
         self.tracking = TrackingDomains(request)
+        #: Domain claims — take a domain back from another publication.
+        self.claims = DomainClaims(request)
 
     def create(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Register a domain. The response ``records`` lists the DNS records to add."""
@@ -120,4 +124,51 @@ class TrackingDomains:
             + "/tracking-domains/"
             + quote(str(tracking_domain_id), safe="")
             + _query(_body(params, kwargs)),
+        )
+
+
+class DomainClaims:
+    """Domain claims. Access via ``mailtea.domains.claims``.
+
+    Use this when adding a domain is refused with ``domain_held_elsewhere``:
+    another publication holds the host. Open a claim, publish the TXT record it
+    returns to prove you control the DNS, then :meth:`verify` it. On success the
+    other publication's domain is released and a fresh one is created for you.
+    """
+
+    def __init__(self, request: RequestFn) -> None:
+        self._request = request
+
+    def create(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Open a claim. Takes ``publication_id``, ``name`` and an optional
+        ``region``. The response ``records`` lists the TXT record to publish."""
+        return self._request("POST", "/v1/domains/claim", _body(params, kwargs))
+
+    def get(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Poll a claim. Requires ``publication_id``."""
+        return self._request(
+            "GET",
+            "/v1/domains/claims/" + quote(str(id), safe="") + _query(_body(params, kwargs)),
+        )
+
+    def verify(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Check the TXT record and complete the claim if it is there.
+
+        Safe to call repeatedly: a record that has not propagated yet leaves the
+        claim pending with the same record, so nothing has to be republished. A
+        completed claim answers with the fresh ``domain`` beside the claim.
+        """
+        return self._request(
+            "POST",
+            "/v1/domains/claims/"
+            + quote(str(id), safe="")
+            + "/verify"
+            + _query(_body(params, kwargs)),
+        )
+
+    def cancel(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Withdraw a pending claim. Requires ``publication_id``."""
+        return self._request(
+            "DELETE",
+            "/v1/domains/claims/" + quote(str(id), safe="") + _query(_body(params, kwargs)),
         )

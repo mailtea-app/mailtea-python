@@ -3,7 +3,16 @@
 All notable changes to the `mailtea` Python package are documented here.
 
 
-## Unreleased
+## 0.10.0 (2026-09-03)
+
+- Added: `domains.claims` — `create()`, `get()`, `verify()` and `cancel()`. When
+  adding a domain is refused with code `domain_held_elsewhere`, another
+  publication holds the host; publish one TXT record to prove you control its
+  DNS and the domain moves to you.
+- Documented: `domains.create()` takes `region` (fixed at creation), `tls` and
+  `tracking_subdomain`, and `domains.list()` filters on `region` and `status`.
+  The resource forwards whatever you pass, so these worked already — this
+  release is where they are stated and covered by tests.
 
 - Added: `contacts.set_property_values()` and `contacts.list_property_values()`.
   These write and read the per-contact values behind `{{contact.<key>}}` merge
