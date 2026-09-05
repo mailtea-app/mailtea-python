@@ -3,6 +3,19 @@
 All notable changes to the `mailtea` Python package are documented here.
 
 
+## Unreleased
+
+- Added: `domains.update(id, tracking_subdomain=None)` removes a tracking
+  subdomain. The domain's links go back to being served from the Mailtea host.
+  Links in mail you have already sent point at the old hostname and stop
+  resolving — there is no way to reinstate them. The `None` reaches the wire as
+  an explicit `null`, so omitting the key and passing `None` are different
+  requests. An empty string is neither: it is refused with
+  `tracking_subdomain_invalid`.
+- Changed: the `MX` row in `records` now reports what the last verify found,
+  instead of reading `pending` on every request but the verify itself. A domain
+  nobody has verified reads `not_started`.
+
 ## 0.10.0 (2026-09-03)
 
 - Added: `domains.claims` — `create()`, `get()`, `verify()` and `cancel()`. When

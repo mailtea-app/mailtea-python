@@ -18,6 +18,15 @@ class Domains:
     arguments, or both. Pass ``region`` (fixed at creation), ``tls`` and
     ``tracking_subdomain`` to :meth:`create`; :meth:`list` filters on ``region``
     and ``status``.
+
+    ``update(id, tracking_subdomain=None)`` removes a tracking subdomain: the
+    domain's links go back to being served from the Mailtea host, and links in
+    mail already sent point at the old hostname and stop resolving. The
+    ``None`` reaches the wire as an explicit ``null``, so omitting the key
+    (leave it alone) and passing ``None`` (remove it) are different requests.
+    An empty string is not a third spelling of either — it is refused with
+    ``tracking_subdomain_invalid``. ``None`` is an update-only value; a create
+    has nothing to clear.
     """
 
     def __init__(self, request: RequestFn) -> None:
@@ -47,6 +56,12 @@ class Domains:
         )
 
     def update(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
+        """Update a domain. ``tracking_subdomain=None`` removes the tracking
+        subdomain; omitting it leaves the subdomain alone.
+
+        The merged payload is sent as given — only the query string drops
+        ``None`` values — so the removal reaches the wire as ``null``.
+        """
         merged = _body(params, kwargs)
         return self._request(
             "PATCH",
