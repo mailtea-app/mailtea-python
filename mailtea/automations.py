@@ -94,7 +94,11 @@ class Automations:
     def activate(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Start the automation so new contacts enroll. Requires
         ``publication_id``. A graph with errors is refused with 422
-        ``automation_invalid`` and the blocking ``issues[]``."""
+        ``automation_invalid`` and the blocking ``issues[]``. A publication that
+        cannot send is a separate 422 ``no_verified_sender``, carrying
+        ``reason`` (``NO_SENDER``, ``DOMAIN_NOT_VERIFIED``, ``WRONG_PURPOSE``,
+        ``DKIM_NOT_VERIFIED`` or ``INVALID_FROM``) and the blocking ``steps[]``
+        — add a sender or verify its sending domain, then activate again."""
         return self._request(
             "POST",
             "/v1/automations/" + quote(str(id), safe="") + "/activate" + _query(_body(params, kwargs)),
