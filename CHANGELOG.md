@@ -3,7 +3,7 @@
 All notable changes to the `mailtea` Python package are documented here.
 
 
-## Unreleased
+## 0.11.0 (2026-09-10)
 
 - Changed: `automations.activate()` documents the `no_verified_sender` refusal.
   A 422 with that code means a `send_email` step has no sender it can send
