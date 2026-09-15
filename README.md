@@ -55,7 +55,7 @@ Python reserved words (`from_=` → `"from"`).
 | `emails.send(params)` | Send a transactional email → `{"id": ...}` |
 | `emails.batch(emails)` | Send up to 100 emails → `{"data": [{"id": ...}]}` |
 | `emails.get(id)` | Retrieve an email and its delivery status |
-| `emails.list(params=None)` | List emails → `{"data", "total", "limit", "offset", "has_more"}` |
+| `emails.list(params=None)` | List emails → `{"data", "total", "limit", "offset", "has_more"}`. Pass `mode="test"` for test-mode mail |
 | `emails.update(id, params)` | Reschedule a scheduled email |
 | `emails.reschedule(id, scheduled_at)` | Convenience wrapper over `update` |
 | `emails.cancel(id)` | Cancel a scheduled email |
@@ -86,7 +86,7 @@ Python reserved words (`from_=` → `"from"`).
 | `domains.tracking.create / list / verify / delete` | Manage CNAME tracking sub-domains under a domain |
 | `webhooks.create / list / get / update / delete` | Manage outbound event subscriptions |
 | `contact_properties.create / list / update / delete` | Manage custom contact fields (team-scoped) |
-| `api_keys.create / list / revoke` | Manage API keys (`settings:write`) |
+| `api_keys.create / list / revoke` | Manage API keys (`settings:write`). `create(mode="test")` mints a test key |
 | `automations.create / list / get / update / delete` | Manage automation graphs (`steps` + optional `connections`) |
 | `automations.validate(params)` | Dry-run a graph → `{"valid", "issues"}` (no automation needed) |
 | `automations.activate / pause / archive` | Lifecycle (`cancel_runs` defaults **false** on pause, **true** on archive) |
@@ -120,6 +120,35 @@ mailtea.emails.send(
     ],
 )
 ```
+
+## Test mode
+
+A test key (`mt_test_…`) sends nothing. Every message it creates is validated,
+recorded and emits webhooks, but is never handed to a provider — so CI can point
+at production Mailtea with your real code and your real webhook handler.
+
+```python
+key = client.api_keys.create(name="CI", mode="test")
+# key["token"] starts with mt_test_ and key["mode"] == "test"
+
+test_client = Mailtea(key["token"])
+test_client.emails.send(
+    from_="you@yourdomain.com",
+    to="bounced@test.mailtea.email",
+    subject="Bounce handling",
+    html="<p>Never delivered.</p>",
+)
+
+page = test_client.emails.list(mode="test")
+```
+
+Reserved recipients on `test.mailtea.email` force the outcome — `delivered@`,
+`bounced@`, `complained@`, `delayed@`, `failed@` — and the first `to` recipient
+decides. Every email carries `mode`, and a test key reads only test mail while a
+live key reads only live mail; there is no mixed view.
+
+A test key is **not** a data sandbox. It reads and writes your real contacts,
+templates, senders and webhooks. Only delivery is simulated.
 
 ## Verifying webhooks
 

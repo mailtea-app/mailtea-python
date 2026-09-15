@@ -3,6 +3,22 @@
 All notable changes to the `mailtea` Python package are documented here.
 
 
+## 0.12.0 (2026-09-15)
+
+- Added: test mode. `api_keys.create(name=..., mode="test")` mints a test key
+  (prefixed `mt_test_`) whose sends are validated, recorded and webhook-emitting
+  but never delivered, so CI can run against production Mailtea with your real
+  code and your real webhook handler. A test key is **not** a data sandbox — it
+  reads and writes your real contacts, templates, senders and webhooks. Only
+  delivery is simulated.
+- Added: `emails.list(mode="test")` reads test-mode mail, and every email
+  carries `mode`. There is no mixed view: a test key reads only test emails and
+  a live key only live ones.
+- Reserved recipients on `test.mailtea.email` force an outcome: `delivered@`,
+  `bounced@`, `complained@`, `delayed@`, `failed@`. The first `to` recipient
+  decides; anything else is delivered.
+- Note: `mode` is never accepted on a send. The key decides.
+
 ## 0.11.0 (2026-09-10)
 
 - Changed: `automations.activate()` documents the `no_verified_sender` refusal.

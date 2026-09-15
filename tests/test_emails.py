@@ -75,6 +75,22 @@ class EmailsTest(unittest.TestCase):
         self.assertIn("search=invoice", url)
         self.assertNotIn("offset", url)
 
+    def test_list_passes_mode_through_to_the_query(self):
+        client, t = self._client(
+            [
+                {
+                    "json": {
+                        "object": "list",
+                        "data": [{"id": "e1", "mode": "test"}],
+                        "total": 1,
+                    }
+                }
+            ]
+        )
+        result = client.emails.list(mode="test")
+        self.assertIn("mode=test", t.calls[0]["url"])
+        self.assertEqual(result["data"][0]["mode"], "test")
+
     def test_reschedule_patches_scheduled_at(self):
         client, t = self._client([{"json": {"object": "email", "id": "e1"}}])
         client.emails.reschedule("e1", "2030-06-01T12:00:00.000Z")
