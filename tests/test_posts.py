@@ -91,3 +91,57 @@ class PostsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PostHeadersTest(unittest.TestCase):
+    """A post's internal name, From and Reply-To (API migration 0127)."""
+
+    def _client(self, responses):
+        transport = fake_transport(responses)
+        client = Mailtea("mt_pat_test", base_url="https://api.mailtea.app", transport=transport)
+        return client, transport
+
+    def test_create_sends_name_from_and_reply_to_apart_from_subject(self):
+        client, t = self._client([{"json": {"id": "iss_1"}}])
+        client.posts.create(
+            publication_id="pub_1",
+            subject="Pulse is live",
+            name="Internal: launch",
+            from_="Sam <sam@acme.com>",
+            reply_to="help@acme.com",
+        )
+        self.assertEqual(
+            json.loads(t.calls[0]["body"]),
+            {
+                "publication_id": "pub_1",
+                "subject": "Pulse is live",
+                "name": "Internal: launch",
+                "from": "Sam <sam@acme.com>",
+                "reply_to": "help@acme.com",
+            },
+        )
+
+    def test_update_clears_headers_with_empty_strings(self):
+        client, t = self._client([{"json": {"object": "post", "id": "iss_1"}}])
+        client.posts.update("iss_1", name="", from_="", reply_to="")
+        self.assertEqual(json.loads(t.calls[0]["body"]), {"name": "", "from": "", "reply_to": ""})
+
+    def test_get_returns_from_and_reply_to(self):
+        client, _ = self._client(
+            [
+                {
+                    "json": {
+                        "object": "post",
+                        "id": "iss_1",
+                        "name": "Internal: launch",
+                        "subject": "Pulse is live",
+                        "from": "Sam <sam@acme.com>",
+                        "reply_to": "help@acme.com",
+                    }
+                }
+            ]
+        )
+        post = client.posts.get("iss_1")
+        self.assertEqual(post["from"], "Sam <sam@acme.com>")
+        self.assertEqual(post["reply_to"], "help@acme.com")
+        self.assertEqual(post["name"], "Internal: launch")

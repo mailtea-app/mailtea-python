@@ -32,6 +32,14 @@ class Emails:
         ``sender_id`` (the id of a named, verified publication sender, which also
         supplies its default ``reply_to``).
 
+        With a ``template`` (``{"id": ..., "variables": {...}}``), ``subject``,
+        ``from_`` and ``sender_id`` are optional: the template's published subject is
+        used, and its sender is the publication's default sender, then the
+        template's own From. The template's variables fill the subject the same
+        way they fill the body.
+
+        >>> mailtea.emails.send(to="c@d.co", template={"id": "etpl_1", "variables": {"first_name": "Dana"}})
+
         ``to``, ``cc``, ``bcc``, and ``reply_to`` each accept a single address or
         a list. Additional optional fields (wire format, snake_case):
 

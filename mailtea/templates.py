@@ -56,7 +56,14 @@ class Templates:
         ``html`` server-side, so do not send both. ``global_css``, ``category``,
         ``preview_image_url``, ``tags``, ``text``, ``subject``, ``from`` and
         ``reply_to`` accept ``None`` to clear them. ``publication_id`` is
-        required (sent as a query parameter)."""
+        required (sent as a query parameter).
+
+        Editing a published template no longer unpublishes it: the change is
+        saved as the working copy, the template keeps its published status, and
+        the published version keeps sending until :meth:`publish` is called
+        again. The reply's ``unpublished`` is kept for compatibility and is
+        always ``False`` now; check ``has_unpublished_versions`` on the reply
+        instead (it also carries ``message`` when that is ``True``)."""
         merged = _body(params, kwargs)
         return self._request(
             "PATCH",
@@ -76,7 +83,10 @@ class Templates:
     def unpublish(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Return a published template to draft. ``published_at`` is kept — it
         records that the template was published once, not that it still is.
-        Requires ``publication_id``."""
+        This is now the only way to stop a published template sending, short of
+        deleting it (editing or restoring it no longer does that on its own).
+        It also drops the published version, so the next :meth:`publish` starts
+        from the current (working) content. Requires ``publication_id``."""
         return self._request(
             "POST",
             "/v1/templates/" + quote(str(id), safe="") + "/unpublish" + _query(_body(params, kwargs)),
@@ -87,13 +97,20 @@ class Templates:
         ``publication_id``; optional ``limit`` (the server caps it at the
         retained maximum).
 
-        Entries are metadata only — ``version``, ``origin`` (``"edit"``,
+        Entries are metadata only: ``version``, ``origin`` (``"edit"``,
         ``"publish"`` or ``"restore"``), ``restored_from_version``, ``format``,
-        ``name``, ``sealed``, ``is_current``, ``created_at``, ``updated_at`` and
-        ``author`` (or ``None``) — never the design document, which one entry
-        alone can carry half a megabyte of. ``is_current`` marks the design the
-        template is serving right now, which is not always the newest entry: a
-        metadata-only update touches the template without recording a version.
+        ``name``, ``sealed``, ``is_current``, ``is_published``, ``created_at``,
+        ``updated_at`` and ``author`` (or ``None``). The design document is
+        never included, because one entry alone can carry half a megabyte of
+        it. ``is_current`` marks
+        the entry that matches the working copy (the saved design being
+        edited), which is not always the newest entry: a metadata-only update
+        touches the template without recording a version. ``is_published`` (a
+        ``bool``) marks the entry automations and the API are sending now. They
+        differ while a published template has unpublished changes.
+        ``is_published`` is ``False`` on every entry of a draft, and on every
+        entry of a template published before the field existed until it is
+        published again.
 
         The reply also carries ``retention``: only the newest ``max_versions``
         are kept, and consecutive edits by the same author within
@@ -109,10 +126,13 @@ class Templates:
         """Put an older design from :meth:`versions` back onto the template.
         Requires ``publication_id``.
 
-        **Restoring is a content write, so the template returns to draft** —
-        automations and the API stop sending it until :meth:`publish` is called
-        again. The reply's ``unpublished`` reports whether that just happened;
-        re-publishing is the caller's job.
+        **Restoring no longer unpublishes the template.** It is a content
+        write, and lands in the working copy: a published template keeps its
+        published status and keeps sending its published version until
+        :meth:`publish` makes the restored design live. The reply's
+        ``unpublished`` is kept for compatibility and is always ``False`` now;
+        check ``has_unpublished_versions`` on the returned ``template`` (or the
+        reply's ``message``) to see whether the restored design is live yet.
 
         History is forward-only: the design being replaced is recorded as its own
         version first, then the restored design is appended as the new newest
@@ -121,8 +141,7 @@ class Templates:
 
         Restoring the design that is already current writes nothing and returns
         ``restored: False`` with ``reason: "identical"`` and
-        ``unpublished: False``, so a no-op restore cannot unpublish a live
-        template. A version that has aged out of retention raises
+        ``unpublished: False``. A version that has aged out of retention raises
         :class:`~mailtea.errors.MailteaError` with ``code``
         ``template_version_not_found``. Returns ``restored``,
         ``restored_from_version``, ``unpublished``, ``message`` and the updated

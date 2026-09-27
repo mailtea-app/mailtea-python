@@ -71,8 +71,12 @@ class Automations:
 
         ``validate_only=True`` returns an ``automation_validation`` and writes
         nothing. A graph change that carries errors saves anyway while the
-        automation is draft/paused/archived; on an ``active`` one it is a 422 —
-        pause, save, then start again."""
+        automation is draft/paused/archived. On an ``active`` one it is a 422
+        ``active_graph_invalid`` only when it adds an error the live version
+        does not already have; ``issues`` then lists just those new problems,
+        and older ones come back with ``pre_existing: True``. Changing an
+        ``active`` automation's trigger is a 422 ``trigger_locked_while_active``.
+        Either way: pause, save, then start again."""
         merged = _body(params, kwargs)
         publication_id = merged.pop("publication_id", None)
         return self._request(
@@ -94,11 +98,16 @@ class Automations:
     def activate(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Start the automation so new contacts enroll. Requires
         ``publication_id``. A graph with errors is refused with 422
-        ``automation_invalid`` and the blocking ``issues[]``. A publication that
+        ``automation_invalid`` and the blocking ``issues[]``, except an
+        ``unknown_step_ref`` at a ``config.*`` path or a trigger
+        ``missing_branch`` that the version it last ran on already had
+        (``pre_existing: True``). A publication that
         cannot send is a separate 422 ``no_verified_sender``, carrying
         ``reason`` (``NO_SENDER``, ``DOMAIN_NOT_VERIFIED``, ``WRONG_PURPOSE``,
-        ``DKIM_NOT_VERIFIED`` or ``INVALID_FROM``) and the blocking ``steps[]``
-        — add a sender or verify its sending domain, then activate again."""
+        ``DKIM_NOT_VERIFIED``, ``INVALID_FROM``, ``CUSTOM_DOMAIN_REQUIRED`` or
+        ``BUILT_IN_SENDER``) and the blocking ``steps[]``. Add a sender or verify
+        its sending domain; for ``BUILT_IN_SENDER``, send the step from your
+        verified domain instead of the built-in address. Then activate again."""
         return self._request(
             "POST",
             "/v1/automations/" + quote(str(id), safe="") + "/activate" + _query(_body(params, kwargs)),

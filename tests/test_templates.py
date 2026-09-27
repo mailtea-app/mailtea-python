@@ -173,7 +173,9 @@ class TemplatesTest(unittest.TestCase):
                 {
                     "json": {
                         "object": "list",
-                        "data": [{"id": "etv_2", "version": 2, "is_current": True}],
+                        "data": [
+                            {"id": "etv_2", "version": 2, "is_current": True, "is_published": False}
+                        ],
                         "retention": {"max_versions": 50, "coalesce_window_seconds": 600},
                     }
                 }
@@ -186,6 +188,9 @@ class TemplatesTest(unittest.TestCase):
             "https://api.mailtea.app/v1/templates/tpl_1/versions?publication_id=pub_1&limit=10",
         )
         self.assertEqual(history.retention.max_versions, 50)
+        # The working copy is not what is sending while there are unpublished changes.
+        self.assertTrue(history.data[0].is_current)
+        self.assertFalse(history.data[0].is_published)
 
     def test_restore_version_posts_the_restore_route(self):
         client, t = self._client(
@@ -194,9 +199,17 @@ class TemplatesTest(unittest.TestCase):
                     "json": {
                         "restored": True,
                         "restored_from_version": 3,
-                        "unpublished": True,
-                        "message": "Restored version 3.",
-                        "template": {"id": "tpl_1", "status": "draft"},
+                        "unpublished": False,
+                        "message": (
+                            "Restored version 3. Your changes are saved but not published. "
+                            "Automations and the API keep sending the published version until "
+                            "you publish this template again."
+                        ),
+                        "template": {
+                            "id": "tpl_1",
+                            "status": "published",
+                            "has_unpublished_versions": True,
+                        },
                     }
                 }
             ]
@@ -209,9 +222,11 @@ class TemplatesTest(unittest.TestCase):
             "https://api.mailtea.app/v1/templates/tpl_1/versions/3/restore?publication_id=pub_1",
         )
         self.assertIsNone(call["body"])
-        # A restore is a content write, so the template comes back as a draft.
-        self.assertTrue(result.unpublished)
-        self.assertEqual(result.template.status, "draft")
+        # A restore no longer unpublishes: `unpublished` is always false now, and
+        # `has_unpublished_versions` is what says the restore is not live yet.
+        self.assertFalse(result.unpublished)
+        self.assertEqual(result.template.status, "published")
+        self.assertTrue(result.template.has_unpublished_versions)
 
     def test_delete_passes_publication_id_in_query(self):
         client, t = self._client([{"json": {"object": "template", "id": "tpl_1", "deleted": True}}])

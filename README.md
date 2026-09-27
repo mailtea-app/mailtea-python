@@ -79,7 +79,7 @@ Python reserved words (`from_=` → `"from"`).
 | `templates.create / list / get / update / publish / duplicate / delete` | Manage reusable email templates |
 | `templates.render(params)` | Render a spec to HTML without saving → `{"html", "text"}` |
 | `templates.versions(id, params=None)` | List a template's design history, newest first (metadata only) |
-| `templates.restore_version(id, version, params=None)` | Put an older design back — a content write, so the template returns to **draft** |
+| `templates.restore_version(id, version, params=None)` | Put an older design back as unpublished changes; a published template keeps sending its published version until you `publish` again |
 | `suppressions.list / add / remove` | Manage the team-wide do-not-send list |
 | `suppressions.export()` | Export the whole suppression list as CSV (raw text) |
 | `domains.create / list / get / verify / update / delete` | Manage sending domains (add, read DNS records, verify) |
