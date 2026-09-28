@@ -2,7 +2,7 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
-## Unreleased
+## 0.18.0 (2026-09-28)
 
 - Added: optimistic-concurrency tokens for editing over an API that may also
   be edited in Mailtea Studio or by another agent. `templates.update` and
