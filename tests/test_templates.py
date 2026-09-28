@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from mailtea import Mailtea
+from mailtea import Mailtea, MailteaError
 from mailtea._transport import HttpResponse
 
 
@@ -136,6 +136,37 @@ class TemplatesTest(unittest.TestCase):
             json.loads(call["body"]), {"publication_id": "pub_1", "name": "Renamed"}
         )
 
+    def test_update_sends_base_revision_and_returns_revision(self):
+        client, t = self._client([{"json": {"object": "template", "id": "tpl_1", "revision": 4}}])
+        result = client.templates.update(
+            "tpl_1", publication_id="pub_1", base_revision=3, name="Renamed"
+        )
+        call = t.calls[0]
+        self.assertEqual(call["method"], "PATCH")
+        self.assertEqual(
+            json.loads(call["body"]),
+            {"publication_id": "pub_1", "base_revision": 3, "name": "Renamed"},
+        )
+        self.assertEqual(result["revision"], 4)
+
+    def test_update_stale_revision_raises_mailtea_error_with_code(self):
+        client, _ = self._client(
+            [
+                {
+                    "status": 409,
+                    "json": {
+                        "error": "The template changed since you read it.",
+                        "code": "stale_write",
+                        "current_revision": 5,
+                    },
+                }
+            ]
+        )
+        with self.assertRaises(MailteaError) as ctx:
+            client.templates.update("tpl_1", publication_id="pub_1", base_revision=3, name="Renamed")
+        self.assertEqual(ctx.exception.status, 409)
+        self.assertEqual(ctx.exception.code, "stale_write")
+
     def test_publish_posts_with_publication_id_and_no_body(self):
         client, t = self._client([{"json": {"object": "template", "id": "tpl_1", "status": "published"}}])
         client.templates.publish("tpl_1", {"publication_id": "pub_1"})
@@ -145,6 +176,35 @@ class TemplatesTest(unittest.TestCase):
             call["url"], "https://api.mailtea.app/v1/templates/tpl_1/publish?publication_id=pub_1"
         )
         self.assertIsNone(call["body"])
+
+    def test_publish_sends_base_revision_as_a_json_body_only_when_given(self):
+        client, t = self._client([{"json": {"object": "template", "id": "tpl_1", "status": "published"}}])
+        client.templates.publish("tpl_1", publication_id="pub_1", base_revision=7)
+        call = t.calls[0]
+        self.assertEqual(call["method"], "POST")
+        # publication_id stays in the query string exactly as an unconditional publish.
+        self.assertEqual(
+            call["url"], "https://api.mailtea.app/v1/templates/tpl_1/publish?publication_id=pub_1"
+        )
+        self.assertEqual(json.loads(call["body"]), {"base_revision": 7})
+
+    def test_publish_stale_revision_raises_mailtea_error_with_code(self):
+        client, _ = self._client(
+            [
+                {
+                    "status": 409,
+                    "json": {
+                        "error": "The template changed since you read it.",
+                        "code": "stale_write",
+                        "current_revision": 8,
+                    },
+                }
+            ]
+        )
+        with self.assertRaises(MailteaError) as ctx:
+            client.templates.publish("tpl_1", publication_id="pub_1", base_revision=3)
+        self.assertEqual(ctx.exception.status, 409)
+        self.assertEqual(ctx.exception.code, "stale_write")
 
     def test_unpublish_posts_with_publication_id_and_no_body(self):
         client, t = self._client(

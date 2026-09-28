@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from mailtea import Mailtea
+from mailtea import Mailtea, MailteaError
 from mailtea._transport import HttpResponse
 
 
@@ -102,6 +102,37 @@ class AutomationsTest(unittest.TestCase):
         params = {"publication_id": "pub_1", "name": "Renamed"}
         client.automations.update("auto_1", params)
         self.assertEqual(params, {"publication_id": "pub_1", "name": "Renamed"})
+
+    def test_update_sends_base_version_stripped_of_publication_id_like_the_rest(self):
+        client, t = self._client([{"json": {"object": "automation", "id": "auto_1", "version": 4}}])
+        steps = [{"key": "start", "type": "trigger", "config": {"trigger_type": "contact.created"}}]
+        client.automations.update(
+            "auto_1", publication_id="pub_1", base_version=3, steps=steps
+        )
+        call = t.calls[0]
+        self.assertEqual(
+            call["url"], "https://api.mailtea.app/v1/automations/auto_1?publication_id=pub_1"
+        )
+        self.assertEqual(json.loads(call["body"]), {"base_version": 3, "steps": steps})
+
+    def test_update_stale_version_raises_mailtea_error_with_code(self):
+        client, _ = self._client(
+            [
+                {
+                    "status": 409,
+                    "json": {
+                        "error": "The automation's graph changed since you read it.",
+                        "code": "stale_version",
+                        "current_version": 5,
+                    },
+                }
+            ]
+        )
+        steps = [{"key": "start", "type": "trigger", "config": {"trigger_type": "contact.created"}}]
+        with self.assertRaises(MailteaError) as ctx:
+            client.automations.update("auto_1", publication_id="pub_1", base_version=3, steps=steps)
+        self.assertEqual(ctx.exception.status, 409)
+        self.assertEqual(ctx.exception.code, "stale_version")
 
     def test_delete_passes_publication_id_in_query(self):
         client, t = self._client(

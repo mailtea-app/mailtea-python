@@ -4,6 +4,17 @@ All notable changes to the `mailtea` Python package are documented here.
 
 ## Unreleased
 
+- Added: optimistic-concurrency tokens for editing over an API that may also
+  be edited in Mailtea Studio or by another agent. `templates.update` and
+  `templates.publish` accept `base_revision` (read from a template's
+  `revision`, now on every template reply); a stale value answers with
+  `MailteaError` (`code` `stale_write`, the response body also carrying
+  `current_revision`) and nothing is saved. `automations.update` accepts
+  `base_version` the same way for graph writes (`steps`), answering `code`
+  `stale_version`. `posts.update` accepts `base_updated_at` (read from a
+  post's `updated_at`, now also returned by `posts.update` itself), answering
+  `code` `stale_write` with `current_updated_at`. All three are optional;
+  omit them for today's unconditional write.
 - Changed: `posts.create` / `posts.update` keep the `from` (keyword `from_=`)
   and `reply_to` you pass, and `posts.get` returns them (`None` when the named
   sender or the publication default decides). `name` is only the post's

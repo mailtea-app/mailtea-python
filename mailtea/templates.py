@@ -58,6 +58,13 @@ class Templates:
         ``reply_to`` accept ``None`` to clear them. ``publication_id`` is
         required (sent as a query parameter).
 
+        Pass ``base_revision`` (the template's ``revision`` as you last read
+        it) to require the template still be at that revision; otherwise the
+        write fails with :class:`~mailtea.errors.MailteaError` (``code``
+        ``stale_write``; the response body also carries ``current_revision``)
+        and nothing is saved. Re-read with :meth:`get`, re-apply your change,
+        and retry. Omit it for an unconditional write.
+
         Editing a published template no longer unpublishes it: the change is
         saved as the working copy, the template keeps its published status, and
         the published version keeps sending until :meth:`publish` is called
@@ -74,10 +81,19 @@ class Templates:
         )
 
     def publish(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
-        """Publish a template so it can seed posts/emails. Requires ``publication_id``."""
+        """Publish a template so it can seed posts/emails. Requires ``publication_id``.
+
+        Pass ``base_revision`` (the template's ``revision`` as you last read
+        it) to require the template still be at that revision; otherwise the
+        publish fails with :class:`~mailtea.errors.MailteaError` (``code``
+        ``stale_write``; the response body also carries ``current_revision``)
+        and nothing is published. Omit it for an unconditional publish."""
+        merged = _body(params, kwargs)
+        base_revision = merged.pop("base_revision", None)
         return self._request(
             "POST",
-            "/v1/templates/" + quote(str(id), safe="") + "/publish" + _query(_body(params, kwargs)),
+            "/v1/templates/" + quote(str(id), safe="") + "/publish" + _query(merged),
+            {"base_revision": base_revision} if base_revision is not None else None,
         )
 
     def unpublish(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:

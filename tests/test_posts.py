@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from mailtea import Mailtea
+from mailtea import Mailtea, MailteaError
 from mailtea._transport import HttpResponse
 
 
@@ -78,6 +78,38 @@ class PostsTest(unittest.TestCase):
         self.assertEqual(
             json.loads(call["body"]), {"subject": "New subject", "html": "<p>Hi</p>"}
         )
+
+    def test_update_sends_base_updated_at_and_reads_it_off_the_result(self):
+        client, t = self._client(
+            [{"json": {"object": "post", "id": "iss_1", "updated_at": "2026-09-27T00:00:00.000Z"}}]
+        )
+        result = client.posts.update(
+            "iss_1", subject="New", base_updated_at="2026-09-01T00:00:00.000Z"
+        )
+        call = t.calls[0]
+        self.assertEqual(
+            json.loads(call["body"]),
+            {"subject": "New", "base_updated_at": "2026-09-01T00:00:00.000Z"},
+        )
+        self.assertEqual(result["updated_at"], "2026-09-27T00:00:00.000Z")
+
+    def test_update_stale_write_raises_mailtea_error_with_code(self):
+        client, _ = self._client(
+            [
+                {
+                    "status": 409,
+                    "json": {
+                        "error": "The post changed since you read it.",
+                        "code": "stale_write",
+                        "current_updated_at": "2026-09-27T00:00:00.000Z",
+                    },
+                }
+            ]
+        )
+        with self.assertRaises(MailteaError) as ctx:
+            client.posts.update("iss_1", subject="New", base_updated_at="2026-09-01T00:00:00.000Z")
+        self.assertEqual(ctx.exception.status, 409)
+        self.assertEqual(ctx.exception.code, "stale_write")
 
     def test_delete_removes_draft(self):
         client, t = self._client([{"json": {"object": "post", "id": "iss_1", "deleted": True}}])

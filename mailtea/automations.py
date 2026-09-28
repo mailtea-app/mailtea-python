@@ -76,7 +76,18 @@ class Automations:
         does not already have; ``issues`` then lists just those new problems,
         and older ones come back with ``pre_existing: True``. Changing an
         ``active`` automation's trigger is a 422 ``trigger_locked_while_active``.
-        Either way: pause, save, then start again."""
+        Either way: pause, save, then start again.
+
+        Pass ``base_version`` (the automation's ``version`` as you last read
+        it) to guard a graph write: it only applies when ``steps`` is also
+        sent, and is ignored on a patch without steps. If the live version
+        moved on and the ``steps`` you sent differ from the live graph, the
+        write fails with :class:`~mailtea.errors.MailteaError` (``code``
+        ``stale_version``; the response body also carries ``current_version``)
+        and nothing is saved. Steps identical to the live graph are accepted
+        whatever the version. ``validate_only=True`` with a stale
+        ``base_version`` answers the same 409. Omit it for an unconditional
+        write."""
         merged = _body(params, kwargs)
         publication_id = merged.pop("publication_id", None)
         return self._request(

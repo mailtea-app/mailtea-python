@@ -67,7 +67,15 @@ class Posts:
         ``html``, ``text``, ``from`` (keyword ``from_=``), ``reply_to``, and
         ``name``. Only the fields you pass change; ``""`` clears ``name``,
         ``from`` or ``reply_to``. Renaming never changes the subject, and
-        ``from`` is gated like ``create``."""
+        ``from`` is gated like ``create``.
+
+        Pass ``base_updated_at`` (the post's ``updated_at`` as you last read
+        it, from :meth:`get`) to require the post still be unchanged since;
+        otherwise the write fails with :class:`~mailtea.errors.MailteaError`
+        (``code`` ``stale_write``; the response body also carries
+        ``current_updated_at``) and nothing is saved. Re-read, re-apply your
+        change, and retry. Omit it for an unconditional write. The reply now
+        also carries ``updated_at``."""
         return self._request(
             "PATCH", "/v1/posts/" + quote(str(id), safe=""), _body(params, kwargs)
         )
