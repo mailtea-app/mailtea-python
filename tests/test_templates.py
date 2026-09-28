@@ -234,7 +234,15 @@ class TemplatesTest(unittest.TestCase):
                     "json": {
                         "object": "list",
                         "data": [
-                            {"id": "etv_2", "version": 2, "is_current": True, "is_published": False}
+                            {
+                                "id": "etv_2",
+                                "version": 2,
+                                "from": "News <news@x.com>",
+                                "reply_to": None,
+                                "sender_recorded": True,
+                                "is_current": True,
+                                "is_published": False,
+                            }
                         ],
                         "retention": {"max_versions": 50, "coalesce_window_seconds": 600},
                     }
@@ -251,6 +259,10 @@ class TemplatesTest(unittest.TestCase):
         # The working copy is not what is sending while there are unpublished changes.
         self.assertTrue(history.data[0].is_current)
         self.assertFalse(history.data[0].is_published)
+        # Each version's sender. `from` is a keyword, so it is read by key.
+        self.assertEqual(history.data[0]["from"], "News <news@x.com>")
+        self.assertIsNone(history.data[0].reply_to)
+        self.assertTrue(history.data[0].sender_recorded)
 
     def test_restore_version_posts_the_restore_route(self):
         client, t = self._client(

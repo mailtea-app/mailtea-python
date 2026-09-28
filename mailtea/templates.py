@@ -115,10 +115,17 @@ class Templates:
 
         Entries are metadata only: ``version``, ``origin`` (``"edit"``,
         ``"publish"`` or ``"restore"``), ``restored_from_version``, ``format``,
-        ``name``, ``sealed``, ``is_current``, ``is_published``, ``created_at``,
-        ``updated_at`` and ``author`` (or ``None``). The design document is
-        never included, because one entry alone can carry half a megabyte of
-        it. ``is_current`` marks
+        ``name``, ``from``, ``reply_to``, ``sender_recorded``, ``sealed``,
+        ``is_current``, ``is_published``, ``created_at``, ``updated_at`` and
+        ``author`` (or ``None``). The design document is never included,
+        because one entry alone can carry half a megabyte of it. ``from`` and
+        ``reply_to`` are the sender the version holds (read ``from`` as
+        ``entry["from"]``, since it is a Python keyword), and a change to only
+        the From or Reply-To records a version (or folds into the open one,
+        like any edit). ``sender_recorded`` says
+        what a ``None`` means: ``True``, the version had none and restoring it
+        clears them; ``False``, the version was recorded before versions kept
+        the sender. ``is_current`` marks
         the entry that matches the working copy (the saved design being
         edited), which is not always the newest entry: a metadata-only update
         touches the template without recording a version. ``is_published`` (a
@@ -129,8 +136,9 @@ class Templates:
         published again.
 
         The reply also carries ``retention``: only the newest ``max_versions``
-        are kept, and consecutive edits by the same author within
-        ``coalesce_window_seconds`` collapse into one entry."""
+        are kept, and consecutive edits by the same author through the same
+        channel (Studio, or one API key) within ``coalesce_window_seconds``
+        collapse into one entry."""
         return self._request(
             "GET",
             "/v1/templates/" + quote(str(id), safe="") + "/versions" + _query(_body(params, kwargs)),
@@ -139,8 +147,10 @@ class Templates:
     def restore_version(
         self, id: str, version: Any, params: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> Dict[str, Any]:
-        """Put an older design from :meth:`versions` back onto the template.
-        Requires ``publication_id``.
+        """Put an older design from :meth:`versions` back onto the template,
+        with the version's From and Reply-To. A version with
+        ``sender_recorded`` ``False`` (recorded before versions kept the
+        sender) leaves the current From and Reply-To as they are. Requires ``publication_id``.
 
         **Restoring no longer unpublishes the template.** It is a content
         write, and lands in the working copy: a published template keeps its

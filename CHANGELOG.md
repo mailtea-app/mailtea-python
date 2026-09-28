@@ -2,6 +2,18 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## Unreleased
+
+- Changed: template history records the sender. Each entry from
+  `templates.versions()` carries `from` (read it as `entry["from"]`),
+  `reply_to` and `sender_recorded`, an update that changes only the From or
+  Reply-To records a version (or folds into the open one, like any edit), and
+  `templates.restore_version()` brings the version's From and Reply-To back
+  with the design. A version with `sender_recorded` `False` was recorded
+  before this change and leaves the current From and Reply-To alone when
+  restored. The behaviour comes from the API and reaches every package version
+  on deploy; this release updates the docstrings.
+
 ## 0.18.0 (2026-09-28)
 
 - Added: optimistic-concurrency tokens for editing over an API that may also
