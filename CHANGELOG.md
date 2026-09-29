@@ -2,7 +2,7 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
-## Unreleased
+## 0.19.0 (2026-09-29)
 
 - Changed: template history records the sender. Each entry from
   `templates.versions()` carries `from` (read it as `entry["from"]`),
