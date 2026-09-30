@@ -177,3 +177,48 @@ class PostHeadersTest(unittest.TestCase):
         self.assertEqual(post["from"], "Sam <sam@acme.com>")
         self.assertEqual(post["reply_to"], "help@acme.com")
         self.assertEqual(post["name"], "Internal: launch")
+
+
+class PostSegmentTest(unittest.TestCase):
+    """A post's audience segment: ``segment_id`` on create, update and get."""
+
+    def _client(self, responses):
+        transport = fake_transport(responses)
+        client = Mailtea("mt_pat_test", base_url="https://api.mailtea.app", transport=transport)
+        return client, transport
+
+    def test_create_sends_segment_id(self):
+        client, t = self._client([{"json": {"id": "iss_1"}}])
+        client.posts.create(
+            publication_id="pub_1", subject="Win back", html="<p>x</p>", segment_id="seg_1"
+        )
+        self.assertEqual(
+            json.loads(t.calls[0]["body"]),
+            {"publication_id": "pub_1", "subject": "Win back", "html": "<p>x</p>", "segment_id": "seg_1"},
+        )
+
+    def test_update_sets_segment_id_and_none_clears_it(self):
+        client, t = self._client(
+            [{"json": {"object": "post", "id": "iss_1"}}, {"json": {"object": "post", "id": "iss_1"}}]
+        )
+        client.posts.update("iss_1", segment_id="seg_1")
+        client.posts.update("iss_1", {"segment_id": None})
+        self.assertEqual(json.loads(t.calls[0]["body"]), {"segment_id": "seg_1"})
+        # None is forwarded as null, which sends the post to all active contacts.
+        self.assertEqual(json.loads(t.calls[1]["body"]), {"segment_id": None})
+
+    def test_get_returns_segment_id(self):
+        client, _ = self._client(
+            [{"json": {"object": "post", "id": "iss_1", "segment_id": "seg_1"}}]
+        )
+        post = client.posts.get("iss_1")
+        self.assertEqual(post["segment_id"], "seg_1")
+        self.assertEqual(post.segment_id, "seg_1")
+
+    def test_docstrings_name_segment_id(self):
+        from mailtea.posts import Posts
+
+        for method in (Posts.create, Posts.update, Posts.get):
+            self.assertIn("segment_id", method.__doc__ or "", method.__name__)
+        self.assertIn("all active contacts", Posts.update.__doc__ or "")
+

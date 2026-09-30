@@ -2,6 +2,21 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## Unreleased
+
+- Added: `segment_id` on `posts.create` and `posts.update` (`None` clears it
+  on update) and on every post reply, to send a post to one segment of its
+  publication instead of all active contacts. `inactive_days` on
+  `segments.create` and `segments.update` (`None` clears it) and on every
+  segment reply: contacts with no open or click in the last N days (1 to
+  3650), counting contacts who never engaged, which is the silent cohort and
+  not engaged readers. The package passes both through as it is; this release
+  documents them. They need the API deployed with this change.
+- Changed: `segments.delete` documents that a segment a draft, scheduled or
+  sending post targets cannot be deleted: it raises `MailteaError` with
+  status 409 and `code` `segment_in_use`. Deleting one used to send those
+  posts to everyone.
+
 ## 0.19.0 (2026-09-29)
 
 - Changed: template history records the sender. Each entry from

@@ -44,6 +44,13 @@ class Posts:
         the post itself sends from the publication's default sender.
         ``reply_to`` must be a valid email address. Both are kept on the post.
 
+        ``segment_id`` sends the post to one audience segment (see
+        ``segments.list``) instead of all active contacts. It must be a
+        segment in the post's publication, or the request is refused with a
+        422. The segment picks the recipients when the post is sent, so a
+        filter segment (``status_filter``, ``query_filter`` or
+        ``inactive_days``) is resolved then.
+
         Returns ``{"id": ...}``.
         """
         return self._request("POST", "/v1/posts", _body(params, kwargs))
@@ -57,7 +64,8 @@ class Posts:
     def get(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
         """Retrieve a post by id. Includes ``name`` (the internal name, equal to
         ``subject`` when not set), ``from`` and ``reply_to`` (``None`` when the
-        named sender or the publication default decides)."""
+        named sender or the publication default decides), and ``segment_id``
+        (``None`` when the post goes to all active contacts)."""
         return self._request(
             "GET", "/v1/posts/" + quote(str(id), safe="") + _query(_body(params, kwargs))
         )
@@ -67,7 +75,9 @@ class Posts:
         ``html``, ``text``, ``from`` (keyword ``from_=``), ``reply_to``, and
         ``name``. Only the fields you pass change; ``""`` clears ``name``,
         ``from`` or ``reply_to``. Renaming never changes the subject, and
-        ``from`` is gated like ``create``.
+        ``from`` is gated like ``create``. ``segment_id`` targets a segment as
+        on ``create``; ``segment_id=None`` clears it so the post goes to
+        all active contacts again.
 
         Pass ``base_updated_at`` (the post's ``updated_at`` as you last read
         it, from :meth:`get`) to require the post still be unchanged since;

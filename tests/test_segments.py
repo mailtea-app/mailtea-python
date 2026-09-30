@@ -68,6 +68,44 @@ class SegmentsTest(unittest.TestCase):
             {"publication_id": "pub_1", "status_filter": None},
         )
 
+    def test_create_sends_inactive_days(self):
+        client, t = self._client([{"json": {"object": "segment", "id": "seg_1", "inactive_days": 90}}])
+        result = client.segments.create(publication_id="pub_1", name="Silent 90", inactive_days=90)
+        self.assertEqual(
+            json.loads(t.calls[0]["body"]),
+            {"publication_id": "pub_1", "name": "Silent 90", "inactive_days": 90},
+        )
+        self.assertEqual(result["inactive_days"], 90)
+
+    def test_update_sets_inactive_days_and_none_clears_it(self):
+        client, t = self._client(
+            [{"json": {"object": "segment", "id": "seg_1"}}, {"json": {"object": "segment", "id": "seg_1"}}]
+        )
+        client.segments.update("seg_1", publication_id="pub_1", inactive_days=30)
+        client.segments.update("seg_1", {"publication_id": "pub_1", "inactive_days": None})
+        self.assertEqual(
+            json.loads(t.calls[0]["body"]), {"publication_id": "pub_1", "inactive_days": 30}
+        )
+        self.assertEqual(
+            json.loads(t.calls[1]["body"]), {"publication_id": "pub_1", "inactive_days": None}
+        )
+
+    def test_docstring_names_inactive_days(self):
+        from mailtea.segments import Segments
+
+        doc = Segments.__doc__ or ""
+        self.assertIn("inactive_days", doc)
+        self.assertIn("never engaged", doc)
+        self.assertIn("not backfilled", doc)
+        self.assertNotIn("migration", doc)
+
+    def test_delete_docstring_says_a_segment_in_use_is_refused(self):
+        from mailtea.segments import Segments
+
+        doc = Segments.delete.__doc__ or ""
+        self.assertIn("segment_in_use", doc)
+        self.assertIn("409", doc)
+
     def test_delete(self):
         client, t = self._client([{"json": {"object": "segment", "id": "seg_1", "deleted": True}}])
         client.segments.delete("seg_1", {"publication_id": "pub_1"})
