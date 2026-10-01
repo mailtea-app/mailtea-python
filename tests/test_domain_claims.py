@@ -40,6 +40,19 @@ class DomainClaimsTest(unittest.TestCase):
         )
         self.assertEqual(claim["id"], "clm_1")
 
+    def test_create_forwards_purpose(self):
+        client, t = self._client(
+            [{"json": {"object": "domain_claim", "id": "clm_1", "purpose": "site"}}]
+        )
+        claim = client.domains.claims.create(
+            publication_id="pub_1", name="acme.com", purpose="site"
+        )
+        self.assertEqual(
+            json.loads(t.calls[0]["body"]),
+            {"publication_id": "pub_1", "name": "acme.com", "purpose": "site"},
+        )
+        self.assertEqual(claim["purpose"], "site")
+
     def test_get_scopes_by_publication(self):
         client, t = self._client([{"json": {"object": "domain_claim", "id": "clm_1"}}])
         client.domains.claims.get("clm_1", publication_id="pub_1")

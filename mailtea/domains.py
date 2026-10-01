@@ -155,8 +155,9 @@ class DomainClaims:
         self._request = request
 
     def create(self, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
-        """Open a claim. Takes ``publication_id``, ``name`` and an optional
-        ``region``. The response ``records`` lists the TXT record to publish."""
+        """Open a claim. Takes ``publication_id``, ``name``, an optional
+        ``region`` and an optional ``purpose`` (``"email"``, ``"site"`` or
+        ``"both"``, default ``"email"``). The response ``records`` lists the TXT record to publish."""
         return self._request("POST", "/v1/domains/claim", _body(params, kwargs))
 
     def get(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:

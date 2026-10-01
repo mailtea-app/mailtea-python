@@ -4,6 +4,15 @@ All notable changes to the `mailtea` Python package are documented here.
 
 ## Unreleased
 
+- Changed (API): `contacts.list(search=...)` with several whole addresses
+  separated by commas or spaces now returns exactly those contacts (up to
+  200), the same as Mailtea Studio and MCP. A list with an entry that is not
+  a whole address is refused with a 400 naming it. Part of an address still
+  matches as before. The docstring says so.
+- Added: `purpose` on `domains.claims.create` (`"email"`, `"site"` or `"both"`,
+  default `"email"`) and on every claim reply. A `site` claim gets no sending
+  identity. The package passes it through as it is; this release documents it.
+  Needs the API deployed with this change.
 - Added: `segment_id` on `posts.create` and `posts.update` (`None` clears it
   on update) and on every post reply, to send a post to one segment of its
   publication instead of all active contacts. `inactive_days` on
