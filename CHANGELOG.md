@@ -2,7 +2,7 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
-## Unreleased
+## 0.20.0 (2026-10-01)
 
 - Changed (API): `contacts.list(search=...)` with several whole addresses
   separated by commas or spaces now returns exactly those contacts (up to
