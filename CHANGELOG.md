@@ -2,6 +2,17 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## Unreleased
+
+- Changed (API): `posts.send`, and `posts.create` with `send=True`, send to
+  the whole audience. They used to stop at 10,000 recipients without saying
+  so. One send can reach at most 25,000; a larger audience raises on a 422
+  `audience_too_large` that carries `audience_count` and `max_recipients`,
+  and nothing is sent or scheduled. On `posts.create` the error body carries
+  the draft's `id`. A send also raises on a 409 `post_changed` when the post
+  was scheduled or edited elsewhere while the request was preparing it. No
+  package change: this is the API's behaviour once it is deployed.
+
 ## 0.21.0 (2026-10-03)
 
 - Changed (API): `posts.send`, and `posts.create` with `send=True`, now raise
