@@ -61,15 +61,33 @@ class InboundEmails:
 
     def get(self, id: str) -> Dict[str, Any]:
         """Retrieve a single received email, including its body, headers, and
-        attachments."""
+        attachments. ``reply_to`` lists where the sender asked replies to go (a
+        reply goes to the first one by default). The arrival checks are
+        ``spam_verdict``, ``virus_verdict``, ``spf_verdict``, ``dkim_verdict``
+        and ``dmarc_verdict`` (``PASS``, ``FAIL``, ``GRAY``,
+        ``PROCESSING_FAILED`` or None), and ``attachments_withheld`` is True
+        when the files were kept back after a failed virus check."""
         return self._request("GET", _BASE + "/" + quote(str(id), safe=""))
 
     def reply(self, id: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any) -> Dict[str, Any]:
-        """Reply to a received email. The reply target (``to``), threading
-        headers, and the ``Re: `` subject default are all server-derived — pass
-        only the content (``html``/``text``, and optionally ``from``, ``subject``,
-        ``cc``, ``bcc``, ``idempotency_key``). Returns the resulting transactional
-        email's ``id`` and ``status``."""
+        """Reply to a received email. Threading headers and the ``Re: ``
+        subject default are server-derived, and the reply goes to the
+        original's Reply-To when it is exactly one valid address, else its From
+        when that is exactly one valid address, else it raises on a 422
+        ``no_reply_target``. ``to`` (a string or a list) may name only the From
+        or a single-address Reply-To entry; anything else raises on a 422
+        ``reply_target_not_allowed``. Pass the content (``html``/``text``)
+        and optionally ``from``, ``subject``, ``cc``, ``bcc``, ``attachments``
+        (a list of ``{"filename", "content", "content_type", "content_id"}``
+        with ``content`` base64; up to 20 files, 6 MiB together, and the whole
+        message must build under the provider's limit), ``headers`` (only
+        ``Auto-Submitted`` and ``X-Auto-Response-Suppress``) and
+        ``idempotency_key``. A plan limit raises on a 403 whose ``code`` is
+        ``daily_cap``, ``monthly_cap`` or ``ramp_cap``. Returns the resulting
+        transactional email's ``id`` and ``status``; a retry with the same key
+        answers 202 while the reply is queued and 200 once sent. If the reply
+        failed, the retry raises on a 409 whose ``code`` is ``reply_failed``,
+        and the same key then makes a fresh reply."""
         return self._request(
             "POST",
             _BASE + "/" + quote(str(id), safe="") + "/reply",

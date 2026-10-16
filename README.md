@@ -54,15 +54,15 @@ Python reserved words (`from_=` → `"from"`).
 | --- | --- |
 | `emails.send(params)` | Send a transactional email → `{"id": ...}` |
 | `emails.batch(emails)` | Send up to 100 emails → `{"data": [{"id": ...}]}` |
-| `emails.get(id)` | Retrieve an email and its delivery status |
+| `emails.get(id)` | Retrieve an email and its delivery status (`message_id` is the Message-ID header, None until sent) |
 | `emails.list(params=None)` | List emails → `{"data", "total", "limit", "offset", "has_more"}`. Pass `mode="test"` for test-mode mail |
 | `emails.update(id, params)` | Reschedule a scheduled email |
 | `emails.reschedule(id, scheduled_at)` | Convenience wrapper over `update` |
 | `emails.cancel(id)` | Cancel a scheduled email |
 | `emails.analytics(params=None)` | Aggregate transactional metrics over an optional date window |
 | `emails.inbound.list(params=None)` | List received emails in a publication (cursor-paginated) |
-| `emails.inbound.get(id)` | Retrieve a received email with body, headers, and attachments |
-| `emails.inbound.reply(id, params=None)` | Reply to a received email (threads by construction) |
+| `emails.inbound.get(id)` | Retrieve a received email with body, headers, attachments, `reply_to`, the arrival checks (`spam_verdict`, `virus_verdict`, `spf_verdict`, `dkim_verdict`, `dmarc_verdict`) and `attachments_withheld` |
+| `emails.inbound.reply(id, params=None)` | Reply to a received email (threads by construction); takes `attachments` (up to 20 files, 6 MiB together) |
 | `emails.inbound.attachments.list(id)` | List a received email's attachments (signed download URLs) |
 | `emails.inbound.attachments.get(id, attachment_id)` | Retrieve one inbound attachment |
 | `contacts.create / upsert / list / get / update / delete` | Manage audience contacts (`upsert` = `create`; the endpoint upserts) |
@@ -87,6 +87,7 @@ Python reserved words (`from_=` → `"from"`).
 | `webhooks.create / list / get / update / delete` | Manage outbound event subscriptions |
 | `contact_properties.create / list / update / delete` | Manage custom contact fields (team-scoped) |
 | `api_keys.create / list / revoke` | Manage API keys (`settings:write`). `create(mode="test")` mints a test key |
+| `api_keys.current()` | Describe the key in use: team, publication and its `receiving_domain`, scopes, mode, plan limits (any key may call it) |
 | `automations.create / list / get / update / delete` | Manage automation graphs (`steps` + optional `connections`) |
 | `automations.validate(params)` | Dry-run a graph → `{"valid", "issues"}` (no automation needed) |
 | `automations.activate / pause / archive` | Lifecycle (`cancel_runs` defaults **false** on pause, **true** on archive) |

@@ -2,6 +2,12 @@
 
 All notable changes to the `mailtea` Python package are documented here.
 
+## 0.23.0 (2026-10-16)
+
+- Changed (API): `emails.inbound.reply` passes `to` and `headers` through as it always did, but the API now acts on them instead of dropping them: a `to` naming anyone the original did not carry raises on a 422 `reply_target_not_allowed`, and any header other than `Auto-Submitted` and `X-Auto-Response-Suppress` raises on a 400. The docstring documents both and the plan-limit `code` values.
+- Added: `api_keys.current()` describes the calling key.
+- Changed (docs): `emails.inbound.reply` documents `attachments`; `emails.get` documents `message_id`; `emails.inbound.get` documents the arrival checks. The fields already passed through.
+
 ## 0.22.0 (2026-10-14)
 
 - Changed (API): `posts.send`, and `posts.create` with `send=True`, send to

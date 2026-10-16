@@ -11,8 +11,9 @@ RequestFn = Callable[..., Any]
 class ApiKeys:
     """The ``api_keys`` resource. Access via ``mailtea.api_keys``.
 
-    Requires a token with ``settings:write``. A key can never be granted scopes
-    the calling token does not already hold.
+    ``create``, ``list`` and ``revoke`` require a token with ``settings:write``.
+    A key can never be granted scopes the calling token does not already hold.
+    ``current`` needs no scope.
     """
 
     def __init__(self, request: RequestFn) -> None:
@@ -37,6 +38,14 @@ class ApiKeys:
     def list(self) -> Dict[str, Any]:
         """List API keys (token values are never returned)."""
         return self._request("GET", "/v1/api-keys")
+
+    def current(self) -> Dict[str, Any]:
+        """Describe the key making the request: ``team``, ``publication`` (with
+        its ``receiving_domain``, or None for a team-wide key), ``scopes``,
+        ``mode`` and ``plan`` (``daily_limit`` and ``monthly_limit`` are hard
+        limits, None means none; ``ramp`` is the new-team daily limit while it
+        lasts). Any key may call it."""
+        return self._request("GET", "/v1/api-keys/current")
 
     def revoke(self, id: str) -> Any:
         """Revoke (delete) an API key by id."""

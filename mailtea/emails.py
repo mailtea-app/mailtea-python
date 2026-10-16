@@ -75,6 +75,9 @@ class Emails:
     def get(self, id: str) -> Dict[str, Any]:
         """Retrieve an email with its delivery status and tracking counters.
 
+        ``message_id`` is the Message-ID header recipients see, None until the
+        email is sent.
+
         Adds a friendly ``status`` alias of the raw ``last_event`` wire field.
         """
         email = self._request("GET", "/v1/emails/" + quote(str(id), safe=""))

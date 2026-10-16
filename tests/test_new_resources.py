@@ -142,6 +142,17 @@ class NewResourcesTest(unittest.TestCase):
         self.assertEqual(t.calls[0]["method"], "DELETE")
         self.assertEqual(t.calls[0]["url"], "https://api.mailtea.app/v1/api-keys/tok_1")
 
+    def test_api_keys_current_gets_the_calling_key(self):
+        body = {"object": "api_key", "id": "tok_1", "mode": "live", "scopes": ["issues:send"],
+                "team": {"id": "org_1", "name": "Acme"},
+                "publication": {"id": "pub_1", "name": "Support", "receiving_domain": "calm-harbor.mailtea.email"},
+                "plan": {"key": "free", "name": "Free", "daily_limit": 100, "monthly_limit": 3000, "ramp": None}}
+        client, t = self._client([{"json": body}])
+        key = client.api_keys.current()
+        self.assertEqual(t.calls[0]["method"], "GET")
+        self.assertEqual(t.calls[0]["url"], "https://api.mailtea.app/v1/api-keys/current")
+        self.assertEqual(key["publication"]["receiving_domain"], "calm-harbor.mailtea.email")
+
 
 if __name__ == "__main__":
     unittest.main()

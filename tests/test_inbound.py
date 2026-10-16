@@ -85,6 +85,24 @@ class InboundTest(unittest.TestCase):
         )
         self.assertEqual(result["id"], "txemail_2")
 
+    def test_inbound_reply_sends_attachments(self):
+        client, t = self._client([{"status": 202, "json": {"id": "txemail_4", "status": "queued"}}])
+        client.emails.inbound.reply(
+            "rxemail_1",
+            text="Attached.",
+            attachments=[{"filename": "a.pdf", "content": "JVBERi0=", "content_type": "application/pdf"}],
+        )
+        self.assertEqual(
+            json.loads(t.calls[0]["body"]),
+            {"text": "Attached.", "attachments": [{"filename": "a.pdf", "content": "JVBERi0=", "content_type": "application/pdf"}]},
+        )
+
+    def test_inbound_get_passes_the_arrival_checks_through(self):
+        client, _ = self._client([{"json": {"object": "email", "id": "rxemail_1", "spam_verdict": "PASS", "attachments_withheld": False}}])
+        email = client.emails.inbound.get("rxemail_1")
+        self.assertEqual(email["spam_verdict"], "PASS")
+        self.assertFalse(email["attachments_withheld"])
+
     def test_inbound_reply_dict_and_kwargs_merge(self):
         client, t = self._client([{"json": {"id": "txemail_3", "status": "queued"}}])
         client.emails.inbound.reply(
@@ -95,6 +113,19 @@ class InboundTest(unittest.TestCase):
         self.assertEqual(
             json.loads(t.calls[0]["body"]),
             {"from": {"email": "hi@acme.com", "name": "Acme"}, "text": "hello"},
+        )
+
+    def test_inbound_reply_forwards_to_and_headers(self):
+        client, t = self._client([{"status": 202, "json": {"id": "txemail_5", "status": "queued"}}])
+        client.emails.inbound.reply(
+            "rxemail_1",
+            text="We got it.",
+            to=["reader@ext.example"],
+            headers={"Auto-Submitted": "auto-replied"},
+        )
+        self.assertEqual(
+            json.loads(t.calls[0]["body"]),
+            {"text": "We got it.", "to": ["reader@ext.example"], "headers": {"Auto-Submitted": "auto-replied"}},
         )
 
 
